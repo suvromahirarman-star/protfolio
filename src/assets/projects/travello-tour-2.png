@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500" fill="none">
+    <rect width="800" height="500" rx="16" fill="#090d16"/>
+    <defs>
+      <linearGradient id="grad" x1="0" y1="0" x2="800" y2="500" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#38bdf8" stop-opacity="0.15"/>
+        <stop offset="1" stop-color="#6366f1" stop-opacity="0.15"/>
+      </linearGradient>
+      <linearGradient id="borderGrad" x1="0" y1="0" x2="800" y2="500" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#38bdf8" stop-opacity="0.4"/>
+        <stop offset="1" stop-color="#6366f1" stop-opacity="0.4"/>
+      </linearGradient>
+    </defs>
+    <rect width="800" height="500" rx="16" fill="url(#grad)"/>
+    <rect x="1" y="1" width="798" height="498" rx="15" stroke="url(#borderGrad)" stroke-width="2"/>
+    
+    <!-- Window Header -->
+    <rect x="20" y="20" width="760" height="40" rx="8" fill="#0d1424" stroke="rgba(255,255,255,0.06)"/>
+    <circle cx="45" cy="40" r="6" fill="#f43f5e"/>
+    <circle cx="65" cy="40" r="6" fill="#eab308"/>
+    <circle cx="85" cy="40" r="6" fill="#10b981"/>
+    <text x="120" y="44" fill="#94a3b8" font-family="monospace" font-size="13">Data Schema Architecture • Travello Tour - Data Model</text>
+    
+    <!-- Central Content Area -->
+    <rect x="40" y="80" width="720" height="380" rx="12" fill="#070a12" stroke="rgba(56,189,248,0.15)"/>
+    
+    <!-- Code Editor Mockup -->
+    <text x="70" y="125" fill="#38bdf8" font-family="monospace" font-size="20" font-weight="bold">Travello Tour - Data Model</text>
+    <text x="70" y="155" fill="#64748b" font-family="monospace" font-size="14">Clean Entities • Tour Metadata • CRUD Endpoints</text>
+    
+    <rect x="70" y="180" width="660" height="1" fill="rgba(255,255,255,0.1)"/>
+    
+    undefined
+  </svg>
