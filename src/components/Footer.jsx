@@ -1,9 +1,11 @@
 import React from 'react';
-import { ArrowUpRight, Heart, Code2 } from 'lucide-react';
-import { developerInfo, socialLinks } from '../data/portfolioData';
+import { ArrowUpRight, Heart, Code2, Lock } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 import { GithubIcon, UpworkIcon, FiverrIcon } from './BrandIcons';
 
 export function Footer() {
+  const { developerInfo, socialLinks, setIsAdminOpen } = usePortfolio();
+
   const scrollTo = (id) => {
     const el = document.querySelector(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -97,10 +99,22 @@ export function Footer() {
 
         {/* Bottom Row */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-mono">
-          <p>© 2026 Mahir Arman Suvro. All rights reserved.</p>
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <span>Built with</span>
-            <span className="text-electric-400 font-semibold">React & Tailwind CSS</span>
+          <p>© 2026 {developerInfo.name}. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <span>Built with</span>
+              <span className="text-electric-400 font-semibold">React & Tailwind CSS</span>
+            </div>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => setIsAdminOpen(true)}
+              className="hover:text-electric-400 transition-colors inline-flex items-center gap-1 text-slate-500 hover:text-slate-300 cursor-pointer"
+              title="Admin Customization (Passcode Protected)"
+            >
+              <Lock className="w-3 h-3 text-electric-400" />
+              <span>Admin Mode</span>
+            </button>
           </div>
         </div>
       </div>

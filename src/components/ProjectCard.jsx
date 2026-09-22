@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ExternalLink, Eye, Server, Layers, Code } from 'lucide-react';
 import { GithubIcon } from './BrandIcons';
 
 export function ProjectCard({ project, onViewDetails }) {
   const getInitialSrc = () => {
-    if (project.image.startsWith('/src/assets')) {
+    if (typeof project.image === 'string' && project.image.startsWith('/src/assets')) {
       return project.image.replace('/src/assets', '');
     }
     return project.image;
@@ -13,8 +13,13 @@ export function ProjectCard({ project, onViewDetails }) {
   const [srcAttempt, setSrcAttempt] = useState(getInitialSrc());
   const [imageError, setImageError] = useState(false);
 
+  useEffect(() => {
+    setImageError(false);
+    setSrcAttempt(getInitialSrc());
+  }, [project.image]);
+
   const handleImageError = () => {
-    if (!srcAttempt.startsWith('/src/assets') && project.image.startsWith('/src/assets')) {
+    if (typeof srcAttempt === 'string' && !srcAttempt.startsWith('/src/assets') && typeof project.image === 'string' && project.image.startsWith('/src/assets')) {
       setSrcAttempt(project.image);
     } else {
       setImageError(true);

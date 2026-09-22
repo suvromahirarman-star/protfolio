@@ -30,7 +30,7 @@ export function ProjectModal({ project, onClose }) {
     : [project.image];
 
   // Resolve initial path without /src/assets if it starts with it
-  const resolvePath = (p) => (p.startsWith('/src/assets') ? p.replace('/src/assets', '') : p);
+  const resolvePath = (p) => (typeof p === 'string' && p.startsWith('/src/assets') ? p.replace('/src/assets', '') : p);
 
   const rawCurrent = rawScreenshots[activeImageIndex] || project.image;
   const [currentSrc, setCurrentSrc] = useState(resolvePath(rawCurrent));
@@ -42,7 +42,7 @@ export function ProjectModal({ project, onClose }) {
 
   const handleImageError = () => {
     const raw = rawScreenshots[activeImageIndex] || project.image;
-    if (!currentSrc.startsWith('/src/assets') && raw.startsWith('/src/assets')) {
+    if (typeof currentSrc === 'string' && !currentSrc.startsWith('/src/assets') && typeof raw === 'string' && raw.startsWith('/src/assets')) {
       setCurrentSrc(raw);
     } else {
       setImageError(true);

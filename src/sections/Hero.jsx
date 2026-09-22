@@ -1,11 +1,12 @@
 import React from 'react';
 import { ArrowRight, Eye, Sparkles } from 'lucide-react';
-import { developerInfo, socialLinks } from '../data/portfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 import { ProfilePhoto } from '../components/ProfilePhoto';
 import { CodeVisualizer } from '../components/CodeVisualizer';
 import { GithubIcon, UpworkIcon, FiverrIcon } from '../components/BrandIcons';
 
 export function Hero() {
+  const { developerInfo, socialLinks } = usePortfolio();
   const scrollTo = (id) => {
     const el = document.querySelector(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });

@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
-import { Terminal, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Terminal } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 
 /**
  * ProfilePhoto component
  * Displays Mahir Arman Suvro's professional photograph.
- * Includes a sleek geometric frame, subtle accent glow, and an automatic
- * fallback monogram badge if the local file is awaiting replacement.
+ * Dynamically reactive to in-browser photo updates with an automatic fallback badge.
  */
 export function ProfilePhoto({ className = '', size = 'lg', priority = false }) {
-  const [srcAttempt, setSrcAttempt] = useState('/profile.jpg');
+  const { developerInfo } = usePortfolio();
+  const activeImage = developerInfo?.profileImage || '/src/assets/profile.jpg';
+
+  const [srcAttempt, setSrcAttempt] = useState(activeImage);
   const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+    setSrcAttempt(activeImage);
+  }, [activeImage]);
 
   const handleImageError = () => {
     if (srcAttempt === '/profile.jpg') {
+      setSrcAttempt('/src/assets/profile.jpg');
+    } else if (srcAttempt !== '/src/assets/profile.jpg') {
       setSrcAttempt('/src/assets/profile.jpg');
     } else {
       setImageError(true);
@@ -39,37 +49,33 @@ export function ProfilePhoto({ className = '', size = 'lg', priority = false }) 
           {!imageError ? (
             <img
               src={srcAttempt}
-              alt="Mahir Arman Suvro - Full-Stack Web Developer"
+              alt={`${developerInfo?.name || 'Mahir Arman Suvro'} - Full-Stack Web Developer`}
               loading={priority ? 'eager' : 'lazy'}
               onError={handleImageError}
               className="w-full h-full object-cover object-top transition duration-500 group-hover:scale-105"
             />
           ) : (
-            /* Fallback sleek developer avatar badge if local image file isn't uploaded yet */
+            /* Fallback sleek developer avatar badge if local image file isn't loaded yet */
             <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-dark-850 to-dark-950 relative overflow-hidden">
               <div className="absolute inset-0 bg-grid-pattern opacity-30" />
               
               <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-electric-500/20 to-indigoAcc-500/20 border border-electric-400/30 flex items-center justify-center mb-3 shadow-inner">
                 <span className="text-3xl sm:text-4xl font-extrabold tracking-wider text-gradient">
-                  MAS
+                  {developerInfo?.initials || 'MAS'}
                 </span>
               </div>
 
               <div className="relative z-10">
                 <h3 className="text-lg font-bold text-slate-100 tracking-tight">
-                  Mahir Arman Suvro
+                  {developerInfo?.name || 'Mahir Arman Suvro'}
                 </h3>
                 <p className="text-xs text-electric-400 font-mono mt-0.5">
-                  Full-Stack Developer
+                  {developerInfo?.title || 'Full-Stack Developer'}
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium mt-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Available for Hire
+                  {developerInfo?.availability || 'Available for Hire'}
                 </div>
-              </div>
-
-              <div className="absolute bottom-2 text-[10px] text-slate-500 font-mono">
-                Replace /src/assets/profile.jpg
               </div>
             </div>
           )}

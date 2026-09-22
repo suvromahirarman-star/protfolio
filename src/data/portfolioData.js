@@ -177,16 +177,42 @@ export const servicesData = [
 
 export const projectsData = [
   {
+    id: "cineverse",
+    title: "CineVerse Movie & Streaming Portal",
+    category: "Full-Stack",
+    filterTags: ["Frontend", "Backend", "Full-Stack"],
+    featured: true,
+    image: "/src/assets/projects/cineverse.png",
+    screenshots: [
+      "/src/assets/projects/cineverse.png",
+      "/src/assets/projects/api-banner.png",
+      "/src/assets/projects/api-features.png",
+    ],
+    description: "A full-featured modern movie and entertainment portal with high-definition media browsing, Dolby Atmos audio previews, and RESTful API backend.",
+    overview: "CineVerse combines a responsive cinematic UI with a high-performance backend serving curated media streams, trending titles, category filters, and administrator content management.",
+    problem: "Streaming web apps require seamless media metadata delivery and clean UI layouts that perform smoothly across devices without UI lag.",
+    solution: "Built a modern frontend featuring rich movie cards, trailers, and responsive media players backed by organized REST API services.",
+    technologies: ["JavaScript", "HTML5", "CSS3", "REST API", "Node.js", "Express"],
+    features: [
+      "Dynamic movie showcase with high-resolution hero banners",
+      "Interactive media player and trailer modal",
+      "Categorized browsing (Trending, Top Rated, Genres, Sci-Fi)",
+      "Ready for Vercel edge deployment and serverless caching",
+    ],
+    github: "https://github.com/suvromahirarman-star/cineverse",
+    liveDemo: null,
+  },
+  {
     id: "travello-tour",
     title: "Travello Tour CRUD API",
     category: "Backend",
     filterTags: ["Backend", "API"],
     featured: true,
-    image: "/src/assets/projects/travello-tour.png",
+    image: "/src/assets/projects/api-banner.png",
     screenshots: [
+      "/src/assets/projects/api-banner.png",
+      "/src/assets/projects/api-features.png",
       "/src/assets/projects/travello-tour.png",
-      "/src/assets/projects/travello-tour-1.png",
-      "/src/assets/projects/travello-tour-2.png",
     ],
     description: "A RESTful CRUD API designed for a tour management application, demonstrating backend routing, API architecture and CRUD functionality.",
     overview: "Travello Tour API provides a clean backend architecture for travel platforms to manage tour packages, bookings, customer inquiries, and destination metadata with modular Express routes.",
@@ -200,8 +226,8 @@ export const projectsData = [
       "Clean JSON response envelopes with HTTP status codes",
       "Ready for MongoDB or relational database persistence",
     ],
-    github: "https://github.com/suvromahirarman-star/travello-tour", // YOUR_TRAVELLO_GITHUB_URL
-    liveDemo: null, // Set to URL when live demo is available
+    github: "https://github.com/suvromahirarman-star/Travello-Tour-CRUD-API",
+    liveDemo: null,
   },
   {
     id: "student-management",

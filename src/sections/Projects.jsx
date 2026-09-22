@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { projectsData } from '../data/portfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 import { ProjectCard } from '../components/ProjectCard';
 import { Layers, Sparkles } from 'lucide-react';
 
 export function Projects({ onOpenModal }) {
+  const { projects } = usePortfolio();
   const [activeFilter, setActiveFilter] = useState('All');
 
   const filters = ['All', 'Backend', 'Frontend', 'API'];
 
-  const filteredProjects = projectsData.filter((project) => {
+  const filteredProjects = projects.filter((project) => {
     if (activeFilter === 'All') return true;
-    return project.filterTags.includes(activeFilter) || project.category === activeFilter;
+    return (project.filterTags && project.filterTags.includes(activeFilter)) || project.category === activeFilter;
   });
 
   const featuredProjects = filteredProjects.filter((p) => p.featured);

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowUpRight, Code2 } from 'lucide-react';
-import { developerInfo } from '../data/portfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 
 export function Navbar({ activeSection = 'home' }) {
+  const { developerInfo } = usePortfolio();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

@@ -1,9 +1,10 @@
 import React from 'react';
-import { socialLinks } from '../data/portfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 import { GithubIcon, UpworkIcon, FiverrIcon } from '../components/BrandIcons';
 
 export function FreelancingCTA() {
+  const { socialLinks } = usePortfolio();
   return (
     <section className="py-20 bg-dark-900/40 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

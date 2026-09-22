@@ -1,8 +1,10 @@
 import React from 'react';
 import { ArrowRight, Server, Layout, Network, FileCode, CheckCircle2 } from 'lucide-react';
-import { developerInfo, aboutPillars } from '../data/portfolioData';
+import { aboutPillars } from '../data/portfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 
 export function About() {
+  const { developerInfo } = usePortfolio();
   const scrollTo = (id) => {
     const el = document.querySelector(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });

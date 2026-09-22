@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Mail, Copy, Check, ArrowUpRight, MessageSquare } from 'lucide-react';
-import { developerInfo, socialLinks } from '../data/portfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 import { ContactForm } from '../components/ContactForm';
 import { GithubIcon, UpworkIcon, FiverrIcon } from '../components/BrandIcons';
 
 export function Contact({ selectedService = '', onShowToast }) {
+  const { developerInfo, socialLinks } = usePortfolio();
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   const handleCopyEmail = () => {
