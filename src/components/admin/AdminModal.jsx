@@ -396,10 +396,6 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
             <h3 className="text-xl font-bold text-white mb-1">Owner Authentication</h3>
             <p className="text-sm text-slate-400 max-w-sm mb-6">
               Only you have permission to modify this portfolio.
-              <br />
-              <span className="text-xs text-electric-400 font-mono mt-1 inline-block">
-                (Default Passcode: 1234)
-              </span>
             </p>
 
             <form onSubmit={handlePinSubmit} className="w-full max-w-xs space-y-4">
