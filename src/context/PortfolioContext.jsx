@@ -3,10 +3,9 @@ import {
   developerInfo as defaultDeveloperInfo,
   socialLinks as defaultSocialLinks,
   projectsData as defaultProjectsData,
-  skillsData as defaultSkillsData,
-  servicesData as defaultServicesData,
 } from '../data/portfolioData';
 import { getAsset, setAsset, clearAllAssets } from '../utils/storage';
+import { verifySecurePin, updateSecurePin, getLockoutStatus } from '../utils/security';
 
 const PortfolioContext = createContext(null);
 
@@ -14,17 +13,21 @@ const STORAGE_KEYS = {
   DEV_INFO: 'portfolio_dev_info',
   SOCIAL_LINKS: 'portfolio_social_links',
   PROJECTS: 'portfolio_projects',
-  ADMIN_PIN: 'portfolio_admin_pin',
   PROFILE_IMAGE: 'portfolio_profile_image',
 };
 
-const DEFAULT_PIN = '1234';
+// Helper to sanitize paths away from legacy /src/assets/
+function sanitizePath(path) {
+  if (typeof path === 'string' && path.startsWith('/src/assets/')) {
+    return path.replace('/src/assets/', '/');
+  }
+  return path;
+}
 
 export function PortfolioProvider({ children }) {
   const [developerInfo, setDeveloperInfo] = useState(defaultDeveloperInfo);
   const [socialLinks, setSocialLinks] = useState(defaultSocialLinks);
   const [projects, setProjects] = useState(defaultProjectsData);
-  const [adminPin, setAdminPin] = useState(DEFAULT_PIN);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -33,34 +36,50 @@ export function PortfolioProvider({ children }) {
   useEffect(() => {
     async function loadData() {
       try {
-        // Load custom profile photo from IndexedDB if saved
         const savedPhoto = await getAsset(STORAGE_KEYS.PROFILE_IMAGE);
         const savedDevInfo = localStorage.getItem(STORAGE_KEYS.DEV_INFO);
         const savedSocial = localStorage.getItem(STORAGE_KEYS.SOCIAL_LINKS);
         const savedProjects = await getAsset(STORAGE_KEYS.PROJECTS);
-        const savedPin = localStorage.getItem(STORAGE_KEYS.ADMIN_PIN);
 
         if (savedPhoto) {
           setDeveloperInfo((prev) => ({ ...prev, profileImage: savedPhoto }));
         }
+
         if (savedDevInfo) {
-          setDeveloperInfo((prev) => ({
-            ...prev,
-            ...JSON.parse(savedDevInfo),
-            profileImage: savedPhoto || JSON.parse(savedDevInfo).profileImage || prev.profileImage,
-          }));
-        }
-        if (savedSocial) {
-          setSocialLinks((prev) => ({ ...prev, ...JSON.parse(savedSocial) }));
-        }
-        if (savedProjects) {
-          const parsed = typeof savedProjects === 'string' ? JSON.parse(savedProjects) : savedProjects;
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setProjects(parsed);
+          try {
+            const parsed = JSON.parse(savedDevInfo);
+            setDeveloperInfo((prev) => ({
+              ...prev,
+              ...parsed,
+              profileImage: savedPhoto || sanitizePath(parsed.profileImage) || prev.profileImage,
+            }));
+          } catch (e) {
+            console.warn('Error parsing saved dev info:', e);
           }
         }
-        if (savedPin) {
-          setAdminPin(savedPin);
+
+        if (savedSocial) {
+          try {
+            setSocialLinks((prev) => ({ ...prev, ...JSON.parse(savedSocial) }));
+          } catch (e) {
+            console.warn('Error parsing saved social links:', e);
+          }
+        }
+
+        if (savedProjects) {
+          try {
+            const parsed = typeof savedProjects === 'string' ? JSON.parse(savedProjects) : savedProjects;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitizedProjects = parsed.map((p) => ({
+                ...p,
+                image: sanitizePath(p.image),
+                screenshots: (p.screenshots || []).map(sanitizePath),
+              }));
+              setProjects(sanitizedProjects);
+            }
+          } catch (e) {
+            console.warn('Error parsing saved projects:', e);
+          }
         }
       } catch (err) {
         console.error('Failed to load customized portfolio data:', err);
@@ -153,19 +172,18 @@ export function PortfolioProvider({ children }) {
     });
   };
 
-  // Verify PIN
-  const verifyPin = (inputPin) => {
-    if (inputPin === adminPin) {
+  // Verify PIN with SHA-256 and brute-force protection
+  const verifyPin = async (inputPin) => {
+    const result = await verifySecurePin(inputPin);
+    if (result.success) {
       setIsAdminAuthenticated(true);
-      return true;
     }
-    return false;
+    return result;
   };
 
-  // Change Admin PIN
-  const changePin = (newPin) => {
-    setAdminPin(newPin);
-    localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, newPin);
+  // Change Admin PIN (updates SHA-256 hash)
+  const changePin = async (newPin) => {
+    await updateSecurePin(newPin);
   };
 
   // Reset to original factory defaults
@@ -174,11 +192,10 @@ export function PortfolioProvider({ children }) {
     setDeveloperInfo(defaultDeveloperInfo);
     setSocialLinks(defaultSocialLinks);
     setProjects(defaultProjectsData);
-    setAdminPin(DEFAULT_PIN);
     setIsAdminAuthenticated(false);
   };
 
-  // Export current data as JSON or JS configuration
+  // Export current data as JSON
   const getExportableData = () => {
     return {
       developerInfo,
@@ -194,7 +211,6 @@ export function PortfolioProvider({ children }) {
         developerInfo,
         socialLinks,
         projects,
-        adminPin,
         isAdminOpen,
         isAdminAuthenticated,
         setIsAdminOpen,
@@ -224,4 +240,3 @@ export function usePortfolio() {
   }
   return context;
 }
-

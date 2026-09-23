@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Lock,
@@ -17,16 +17,25 @@ import {
   ExternalLink,
   Eye,
   KeyRound,
+  Globe,
+  Loader2,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { usePortfolio } from '../../context/PortfolioContext';
 import { fileToBase64 } from '../../utils/storage';
+import { getLockoutStatus } from '../../utils/security';
+import {
+  getSavedGitHubToken,
+  saveGitHubToken,
+  publishToGitHub,
+} from '../../utils/githubSync';
 
 export function AdminModal({ isOpen, onClose, onShowToast }) {
   const {
     developerInfo,
     socialLinks,
     projects,
-    adminPin,
     isAdminAuthenticated,
     setIsAdminAuthenticated,
     updateProfilePhoto,
@@ -42,11 +51,12 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     getExportableData,
   } = usePortfolio();
 
-  // Authentication state
+  // Authentication & Security state
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const [lockoutSec, setLockoutSec] = useState(0);
 
-  // Tab state: 'profile' | 'projects' | 'settings'
+  // Tab state: 'profile' | 'projects' | 'publish' | 'security'
   const [activeTab, setActiveTab] = useState('profile');
 
   // Form states for profile & links
@@ -63,6 +73,22 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     email: socialLinks.email || '',
   });
 
+  // Keep form in sync when developerInfo updates
+  useEffect(() => {
+    setProfileForm({
+      name: developerInfo.name || '',
+      title: developerInfo.title || '',
+      headline: developerInfo.headline || '',
+      aboutBio: developerInfo.aboutBio || '',
+      location: developerInfo.location || '',
+      availability: developerInfo.availability || '',
+      upwork: socialLinks.upwork || '',
+      fiverr: socialLinks.fiverr || '',
+      github: socialLinks.github || '',
+      email: socialLinks.email || '',
+    });
+  }, [developerInfo, socialLinks]);
+
   // Project editing states
   const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id || null);
   const [isAddingProject, setIsAddingProject] = useState(false);
@@ -77,6 +103,12 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     featured: true,
   });
 
+  // GitHub Publish states
+  const [ghToken, setGhToken] = useState(getSavedGitHubToken());
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishProgress, setPublishProgress] = useState('');
+  const [publishSuccess, setPublishSuccess] = useState(false);
+
   // Change PIN states
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -86,17 +118,44 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
   const screenshotInputRef = useRef(null);
   const newProjectScreenshotRef = useRef(null);
 
+  // Check lockout on mount & tick down
+  useEffect(() => {
+    const status = getLockoutStatus();
+    if (status.isLocked) {
+      setLockoutSec(status.remainingSeconds);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (lockoutSec <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSec((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setPinError('');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSec]);
+
   if (!isOpen) return null;
 
   // Handle PIN verification
-  const handlePinSubmit = (e) => {
+  const handlePinSubmit = async (e) => {
     e.preventDefault();
-    if (verifyPin(pinInput)) {
+    const res = await verifyPin(pinInput);
+    if (res.success) {
       setPinError('');
       setPinInput('');
       onShowToast?.('Admin access granted!', 'success');
     } else {
-      setPinError('Incorrect PIN. Please try again.');
+      setPinError(res.error);
+      if (res.locked) {
+        setLockoutSec(res.remainingSeconds || 300);
+      }
     }
   };
 
@@ -113,7 +172,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     try {
       const base64 = await fileToBase64(file);
       await updateProfilePhoto(base64);
-      onShowToast?.('Profile photo updated successfully!', 'success');
+      onShowToast?.('Profile photo updated in browser preview!', 'success');
     } catch (err) {
       console.error(err);
       onShowToast?.('Failed to process image file', 'error');
@@ -201,7 +260,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       github: newProjectForm.github || null,
       liveDemo: newProjectForm.liveDemo || null,
       featured: newProjectForm.featured,
-      image: screenshotList[0] || '/src/assets/projects/travello-tour.png',
+      image: screenshotList[0] || '/projects/travello-tour.png',
       screenshots: screenshotList,
       features: ['Clean code architecture', 'Responsive UI & modern design'],
     };
@@ -222,7 +281,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
   };
 
   // Handle PIN Change
-  const handleChangePin = (e) => {
+  const handleChangePin = async (e) => {
     e.preventDefault();
     if (newPin.length < 4) {
       setPinChangeMsg({ text: 'PIN must be at least 4 digits/characters.', type: 'error' });
@@ -232,11 +291,42 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       setPinChangeMsg({ text: 'PIN confirmation does not match.', type: 'error' });
       return;
     }
-    changePin(newPin);
+    await changePin(newPin);
     setNewPin('');
     setConfirmPin('');
-    setPinChangeMsg({ text: 'Admin PIN updated successfully!', type: 'success' });
-    onShowToast?.('Admin PIN updated!', 'success');
+    setPinChangeMsg({ text: 'Admin passcode updated with SHA-256 encryption!', type: 'success' });
+    onShowToast?.('Admin PIN updated securely!', 'success');
+  };
+
+  // Handle Publish to GitHub & Vercel (Universal cross-device sync)
+  const handlePublishLive = async () => {
+    if (!ghToken) {
+      onShowToast?.('Please enter your GitHub Personal Access Token', 'error');
+      return;
+    }
+
+    saveGitHubToken(ghToken);
+    setIsPublishing(true);
+    setPublishSuccess(false);
+
+    try {
+      await publishToGitHub({
+        token: ghToken,
+        developerInfo,
+        socialLinks,
+        projects,
+        onProgress: (msg) => setPublishProgress(msg),
+      });
+
+      setPublishSuccess(true);
+      onShowToast?.('Published to GitHub! Vercel is deploying to all devices.', 'success');
+    } catch (err) {
+      console.error(err);
+      onShowToast?.(`Publish error: ${err.message}`, 'error');
+      setPublishProgress(`Error: ${err.message}`);
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   // Handle Export Data
@@ -272,14 +362,14 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                Portfolio Customizer
-                <span className="text-xs px-2 py-0.5 rounded-full bg-electric-500/10 text-electric-400 border border-electric-400/20">
-                  Owner Admin
+                Portfolio Studio
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">
+                  SHA-256 Protected
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
                 {isAdminAuthenticated
-                  ? 'Update your photo, links, projects & screenshots in real-time'
+                  ? 'Customize your website live and deploy permanently to all devices'
                   : 'Enter your Admin PIN to unlock customization'}
               </p>
             </div>
@@ -298,15 +388,15 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
         {!isAdminAuthenticated ? (
           /* PIN Entry Gate */
           <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-electric-500/10 border border-electric-400/30 flex items-center justify-center mb-4 text-electric-400">
+            <div className="w-16 h-16 rounded-2xl bg-electric-500/10 border border-electric-400/30 flex items-center justify-center mb-4 text-electric-400 shadow-inner">
               <KeyRound className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-1">Enter Admin PIN</h3>
+            <h3 className="text-xl font-bold text-white mb-1">Owner Authentication</h3>
             <p className="text-sm text-slate-400 max-w-sm mb-6">
-              Only you can customize this portfolio. Enter your secret passcode to continue.
+              Only you have permission to modify this portfolio.
               <br />
-              <span className="text-xs text-electric-400/80 font-mono mt-1 inline-block">
-                (Default PIN: 1234)
+              <span className="text-xs text-electric-400 font-mono mt-1 inline-block">
+                (Default Passcode: 1234)
               </span>
             </p>
 
@@ -315,28 +405,35 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                 <input
                   type="password"
                   value={pinInput}
+                  disabled={lockoutSec > 0}
                   onChange={(e) => {
                     setPinInput(e.target.value);
                     setPinError('');
                   }}
-                  placeholder="Enter 4-digit PIN"
+                  placeholder={lockoutSec > 0 ? `Locked (${lockoutSec}s)` : 'Enter 4-digit PIN'}
                   maxLength={10}
                   autoFocus
-                  className="w-full px-4 py-3 rounded-xl bg-dark-950 border border-white/15 text-center text-xl tracking-widest text-white placeholder:text-slate-600 focus:outline-none focus:border-electric-400 focus:ring-1 focus:ring-electric-400"
+                  className="w-full px-4 py-3 rounded-xl bg-dark-950 border border-white/15 text-center text-xl tracking-widest text-white placeholder:text-slate-600 focus:outline-none focus:border-electric-400 focus:ring-1 focus:ring-electric-400 disabled:opacity-50"
                 />
                 {pinError && (
                   <p className="text-xs text-rose-400 mt-2 flex items-center justify-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    {pinError}
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{pinError}</span>
+                  </p>
+                )}
+                {lockoutSec > 0 && (
+                  <p className="text-xs text-amber-400 mt-1 font-mono">
+                    Cooldown active: {lockoutSec}s remaining
                   </p>
                 )}
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-electric-500 to-indigoAcc-600 text-white font-semibold text-sm shadow-lg shadow-electric-500/25 hover:opacity-95 transition-opacity"
+                disabled={lockoutSec > 0}
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-electric-500 to-indigoAcc-600 text-white font-semibold text-sm shadow-lg shadow-electric-500/25 hover:opacity-95 transition-opacity disabled:opacity-50 cursor-pointer"
               >
-                Unlock Dashboard
+                Unlock Studio
               </button>
             </form>
           </div>
@@ -344,11 +441,11 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
           /* Authenticated Dashboard Tabs */
           <div className="flex flex-col flex-grow overflow-hidden">
             {/* Tabs Header */}
-            <div className="flex border-b border-white/10 bg-dark-950/40 px-6 pt-2">
+            <div className="flex flex-wrap border-b border-white/10 bg-dark-950/40 px-6 pt-2">
               <button
                 type="button"
                 onClick={() => setActiveTab('profile')}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                   activeTab === 'profile'
                     ? 'border-electric-400 text-electric-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -361,7 +458,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
               <button
                 type="button"
                 onClick={() => setActiveTab('projects')}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                   activeTab === 'projects'
                     ? 'border-electric-400 text-electric-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -373,15 +470,31 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
 
               <button
                 type="button"
-                onClick={() => setActiveTab('settings')}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === 'settings'
+                onClick={() => setActiveTab('publish')}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'publish'
+                    ? 'border-emerald-400 text-emerald-300'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Globe className="w-4 h-4 text-emerald-400" />
+                <span className="flex items-center gap-1.5">
+                  Publish to All Devices
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('security')}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'security'
                     ? 'border-electric-400 text-electric-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <Lock className="w-4 h-4" />
-                <span>Security &amp; Backup</span>
+                <ShieldCheck className="w-4 h-4" />
+                <span>Security &amp; PIN</span>
               </button>
             </div>
 
@@ -392,11 +505,11 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                 <div className="p-5 rounded-2xl bg-dark-950/50 border border-white/10 flex flex-col sm:flex-row items-center gap-6">
                   <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-dark-800 border-2 border-electric-400/40 shadow-lg flex-shrink-0">
                     <img
-                      src={developerInfo.profileImage || '/src/assets/profile.jpg'}
+                      src={developerInfo.profileImage || '/profile.jpg'}
                       alt="Profile preview"
                       className="w-full h-full object-cover object-top"
                       onError={(e) => {
-                        e.currentTarget.src = '/src/assets/profile.jpg';
+                        e.currentTarget.src = '/profile.jpg';
                       }}
                     />
                   </div>
@@ -418,7 +531,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       <button
                         type="button"
                         onClick={() => photoInputRef.current?.click()}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 border border-electric-400/30 text-xs font-semibold transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 border border-electric-400/30 text-xs font-semibold transition-colors cursor-pointer"
                       >
                         <Upload className="w-4 h-4" />
                         <span>Upload New Photo</span>
@@ -549,7 +662,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-bold shadow-lg shadow-electric-500/20 transition-all cursor-pointer"
                     >
                       <Save className="w-4 h-4" />
-                      <span>Save Profile &amp; Links</span>
+                      <span>Save Changes</span>
                     </button>
                   </div>
                 </form>
@@ -563,15 +676,15 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                   <>
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-sm font-semibold text-white">Project List</h4>
+                        <h4 className="text-sm font-semibold text-white">Project Showcase</h4>
                         <p className="text-xs text-slate-400">
-                          Select a project below to attach screenshots or edit its repository links.
+                          Select a project to upload screenshots or edit descriptions and links.
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setIsAddingProject(true)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 border border-electric-400/30 text-xs font-semibold transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 border border-electric-400/30 text-xs font-semibold transition-colors cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
                         <span>Add New Project</span>
@@ -585,7 +698,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                           key={proj.id}
                           type="button"
                           onClick={() => setSelectedProjectId(proj.id)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                             selectedProjectId === proj.id
                               ? 'bg-electric-500 text-white border-electric-400 shadow-md shadow-electric-500/20'
                               : 'bg-dark-950 text-slate-300 border-white/10 hover:border-white/20'
@@ -617,7 +730,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                                 onShowToast?.('Project deleted', 'success');
                               }
                             }}
-                            className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title="Delete this project"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -643,7 +756,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                             <button
                               type="button"
                               onClick={() => screenshotInputRef.current?.click()}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 text-xs font-semibold transition-colors"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 text-xs font-semibold transition-colors cursor-pointer"
                             >
                               <Upload className="w-3.5 h-3.5" />
                               <span>Upload Screenshots</span>
@@ -667,7 +780,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                                     <button
                                       type="button"
                                       onClick={() => handleRemoveScreenshot(selectedProject.id, idx)}
-                                      className="p-1.5 rounded-lg bg-rose-500/80 hover:bg-rose-600 text-white transition-colors"
+                                      className="p-1.5 rounded-lg bg-rose-500/80 hover:bg-rose-600 text-white transition-colors cursor-pointer"
                                       title="Remove screenshot"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -741,7 +854,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       <button
                         type="button"
                         onClick={() => setIsAddingProject(false)}
-                        className="text-xs text-slate-400 hover:text-white"
+                        className="text-xs text-slate-400 hover:text-white cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -860,13 +973,13 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       <button
                         type="button"
                         onClick={() => setIsAddingProject(false)}
-                        className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white"
+                        className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-6 py-2.5 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-bold shadow-lg shadow-electric-500/20"
+                        className="px-6 py-2.5 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-bold shadow-lg shadow-electric-500/20 cursor-pointer"
                       >
                         Create Project
                       </button>
@@ -876,8 +989,93 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
               </div>
             )}
 
-            {/* Tab 3: Security & Backup */}
-            {activeTab === 'settings' && (
+            {/* Tab 3: Publish to Live Site (Universal Cross-Device Deployment) */}
+            {activeTab === 'publish' && (
+              <div className="p-6 overflow-y-auto space-y-6">
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-dark-950 to-dark-900 border border-emerald-500/30 space-y-3">
+                  <div className="flex items-center gap-2.5 text-emerald-400">
+                    <Sparkles className="w-5 h-5" />
+                    <h4 className="text-base font-bold text-white">
+                      Publish to All Devices Worldwide
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    When you click <strong>"Publish Live"</strong>, all your uploaded photos, project screenshots, and edited links are automatically committed to your GitHub repository (<code>suvromahirarman-star/protfolio</code>).
+                    <br />
+                    Vercel will detect the commit and redeploy your website in ~25 seconds, making your updates visible on <strong>every phone, laptop, and client device</strong>!
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-dark-950/60 border border-white/10 space-y-4">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-electric-400" />
+                    <span>GitHub Personal Access Token</span>
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    To allow the browser to publish directly to your repository, enter your GitHub Personal Access Token (classic with <code>repo</code> scope, or fine-grained with read/write on contents).
+                  </p>
+
+                  <div className="space-y-2">
+                    <input
+                      type="password"
+                      value={ghToken}
+                      onChange={(e) => setGhToken(e.target.value)}
+                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-4 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400 font-mono"
+                    />
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span>Token is securely stored locally in your browser.</span>
+                      <a
+                        href="https://github.com/settings/tokens/new?scopes=repo&description=Portfolio+Admin+Sync"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-electric-400 hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>Generate Token on GitHub</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {publishProgress && (
+                    <div className="p-3 rounded-xl bg-dark-900 border border-white/10 text-xs text-slate-300 font-mono flex items-center gap-2">
+                      {isPublishing ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-electric-400 flex-shrink-0" />
+                      ) : publishSuccess ? (
+                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                      )}
+                      <span>{publishProgress}</span>
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      disabled={isPublishing}
+                      onClick={handlePublishLive}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {isPublishing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Publishing to GitHub...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Globe className="w-4 h-4" />
+                          <span>🚀 Publish Live to All Devices</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: Security & PIN Management */}
+            {activeTab === 'security' && (
               <div className="p-6 overflow-y-auto space-y-6">
                 {/* Change PIN */}
                 <div className="p-5 rounded-2xl bg-dark-950/60 border border-white/10 space-y-4">
@@ -886,7 +1084,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                     <span>Change Admin Passcode (PIN)</span>
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Set a private PIN so nobody else can edit your website settings.
+                    Set a private PIN protected with SHA-256 cryptographic hashing.
                   </p>
 
                   <form onSubmit={handleChangePin} className="space-y-3 max-w-sm">
@@ -928,9 +1126,9 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
 
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-semibold transition-colors"
+                      className="px-4 py-2 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      Update PIN
+                      Update Passcode
                     </button>
                   </form>
                 </div>
@@ -939,16 +1137,16 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                 <div className="p-5 rounded-2xl bg-dark-950/60 border border-white/10 space-y-3">
                   <h4 className="text-sm font-semibold text-white flex items-center gap-2">
                     <Download className="w-4 h-4 text-electric-400" />
-                    <span>Download Configuration Backup</span>
+                    <span>Download JSON Backup</span>
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Export all your updated links, custom projects, and settings to a JSON file.
+                    Export all your current links, custom projects, and settings to a JSON file.
                   </p>
 
                   <button
                     type="button"
                     onClick={handleExport}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-200 border border-white/10 text-xs font-semibold transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-200 border border-white/10 text-xs font-semibold transition-colors cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     <span>Export JSON Backup</span>
@@ -962,7 +1160,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                     <span>Reset All Customizations</span>
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Reset your portfolio back to the initial code defaults. This clears all custom uploaded photos, screenshots, and modified links.
+                    Reset your portfolio back to original code defaults. This clears all custom uploaded photos, screenshots, and modified links.
                   </p>
 
                   <button
@@ -976,7 +1174,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                         onClose();
                       }
                     }}
-                    className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-colors"
+                    className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-colors cursor-pointer"
                   >
                     Reset to Factory Defaults
                   </button>
@@ -991,4 +1189,3 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
 }
 
 export default AdminModal;
-

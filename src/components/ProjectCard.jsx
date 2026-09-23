@@ -19,11 +19,7 @@ export function ProjectCard({ project, onViewDetails }) {
   }, [project.image]);
 
   const handleImageError = () => {
-    if (typeof srcAttempt === 'string' && !srcAttempt.startsWith('/src/assets') && typeof project.image === 'string' && project.image.startsWith('/src/assets')) {
-      setSrcAttempt(project.image);
-    } else {
-      setImageError(true);
-    }
+    setImageError(true);
   };
 
   // Fallback icon based on category

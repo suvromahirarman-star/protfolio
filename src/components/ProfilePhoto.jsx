@@ -9,24 +9,18 @@ import { usePortfolio } from '../context/PortfolioContext';
  */
 export function ProfilePhoto({ className = '', size = 'lg', priority = false }) {
   const { developerInfo } = usePortfolio();
-  const activeImage = developerInfo?.profileImage || '/src/assets/profile.jpg';
+  const activeImage = developerInfo?.profileImage || '/profile.jpg';
 
   const [srcAttempt, setSrcAttempt] = useState(activeImage);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     setImageError(false);
-    setSrcAttempt(activeImage);
-  }, [activeImage]);
+    setSrcAttempt(developerInfo?.profileImage || '/profile.jpg');
+  }, [developerInfo?.profileImage]);
 
   const handleImageError = () => {
-    if (srcAttempt === '/profile.jpg') {
-      setSrcAttempt('/src/assets/profile.jpg');
-    } else if (srcAttempt !== '/src/assets/profile.jpg') {
-      setSrcAttempt('/src/assets/profile.jpg');
-    } else {
-      setImageError(true);
-    }
+    setImageError(true);
   };
 
   const sizeClasses = {

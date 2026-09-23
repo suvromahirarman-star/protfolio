@@ -41,12 +41,7 @@ export function ProjectModal({ project, onClose }) {
   }, [activeImageIndex, project]);
 
   const handleImageError = () => {
-    const raw = rawScreenshots[activeImageIndex] || project.image;
-    if (typeof currentSrc === 'string' && !currentSrc.startsWith('/src/assets') && typeof raw === 'string' && raw.startsWith('/src/assets')) {
-      setCurrentSrc(raw);
-    } else {
-      setImageError(true);
-    }
+    setImageError(true);
   };
 
   const handleNextImage = () => {
