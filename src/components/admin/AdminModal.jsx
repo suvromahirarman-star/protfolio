@@ -36,6 +36,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     developerInfo,
     socialLinks,
     projects,
+    currentPinHash,
     isAdminAuthenticated,
     setIsAdminAuthenticated,
     updateProfilePhoto,
@@ -315,6 +316,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
         developerInfo,
         socialLinks,
         projects,
+        authConfig: { pinHash: currentPinHash },
         onProgress: (msg) => setPublishProgress(msg),
       });
 
@@ -1124,12 +1126,22 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       </p>
                     )}
 
-                    <button
-                      type="submit"
-                      className="px-4 py-2 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      Update Passcode
-                    </button>
+                    <div className="flex items-center gap-3 pt-1">
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        Update Passcode
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('publish')}
+                        className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>Sync to All Devices (Publish) ➔</span>
+                      </button>
+                    </div>
                   </form>
                 </div>
 

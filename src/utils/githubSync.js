@@ -85,7 +85,7 @@ async function commitFileToGitHub({ path, contentBase64, message, token }) {
 /**
  * Formats portfolio data into standard JavaScript code for portfolioData.js
  */
-export function generatePortfolioDataCode(developerInfo, socialLinks, projects) {
+export function generatePortfolioDataCode(developerInfo, socialLinks, projects, authConfig) {
   return `/**
  * Centralized Portfolio Data for Mahir Arman Suvro
  * Automatically updated via In-Browser Admin Studio.
@@ -94,6 +94,14 @@ export function generatePortfolioDataCode(developerInfo, socialLinks, projects) 
 export const developerInfo = ${JSON.stringify(developerInfo, null, 2)};
 
 export const socialLinks = ${JSON.stringify(socialLinks, null, 2)};
+
+export const authConfig = ${JSON.stringify(
+    authConfig || {
+      pinHash: 'd2c6a1db88d44e95f6795a77e3805923fbea1bb4efca0d726ee5793adc15b0ee',
+    },
+    null,
+    2
+  )};
 
 export const quickStats = [
   { label: "Projects Built", value: "5+", detail: "Real applications & APIs" },
@@ -236,6 +244,7 @@ export async function publishToGitHub({
   developerInfo,
   socialLinks,
   projects,
+  authConfig,
   onProgress,
 }) {
   if (!token) {
@@ -296,7 +305,12 @@ export async function publishToGitHub({
 
   // 3. Commit updated portfolioData.js
   onProgress?.('Updating portfolio data in GitHub repository...');
-  const codeContent = generatePortfolioDataCode(developerInfo, socialLinks, updatedProjects);
+  const codeContent = generatePortfolioDataCode(
+    developerInfo,
+    socialLinks,
+    updatedProjects,
+    authConfig
+  );
   const codeBase64 = btoa(unescape(encodeURIComponent(codeContent)));
 
   await commitFileToGitHub({
@@ -309,3 +323,4 @@ export async function publishToGitHub({
   onProgress?.('Publishing complete! Vercel is now deploying your changes.');
   return true;
 }
+

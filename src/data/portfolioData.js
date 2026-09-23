@@ -26,6 +26,10 @@ export const socialLinks = {
   email: "YOUR_EMAIL@example.com", // Replace with your real contact email
 };
 
+export const authConfig = {
+  pinHash: "d2c6a1db88d44e95f6795a77e3805923fbea1bb4efca0d726ee5793adc15b0ee", // Salted SHA-256 for default '1234'
+};
+
 export const quickStats = [
   { label: "Projects Built", value: "5+", detail: "Real applications & APIs" },
   { label: "REST API", value: "Backend", detail: "Express & Node architecture" },

@@ -1,9 +1,12 @@
 /**
  * Enhanced Security Layer for Admin Customizer
- * - SHA-256 cryptographic hashing via Web Crypto API
+ * - Salted SHA-256 cryptographic hashing via Web Crypto API
  * - Brute-force protection with temporary lockouts
  * - Session expiration timers
+ * - Cross-device global PIN synchronization support
  */
+
+import { authConfig } from '../data/portfolioData';
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
@@ -15,19 +18,19 @@ const STORAGE_KEYS = {
   SESSION_EXPIRY: 'portfolio_admin_session_expiry',
 };
 
-// Default PIN '1234' pre-computed SHA-256
-const DEFAULT_PIN_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
+// Cryptographic salt so rainbow tables cannot decipher PINs
+export const PIN_SALT = 'mas_salt_2026_MAS';
 
 /**
- * Computes SHA-256 hash string for an input PIN
+ * Computes SHA-256 hash string for an input PIN with salt
  */
 export async function hashPin(pin) {
+  const salted = String(pin).trim() + PIN_SALT;
   if (typeof window === 'undefined' || !window.crypto?.subtle) {
-    // Fallback simple hash if Web Crypto unavailable
     return String(pin);
   }
   const encoder = new TextEncoder();
-  const data = encoder.encode(pin);
+  const data = encoder.encode(salted);
   const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -47,9 +50,9 @@ export function getLockoutStatus() {
 }
 
 /**
- * Verifies PIN against stored SHA-256 hash with attempt tracking
+ * Verifies PIN against stored or global SHA-256 hash with attempt tracking
  */
-export async function verifySecurePin(enteredPin) {
+export async function verifySecurePin(enteredPin, dynamicPinHash) {
   const lockout = getLockoutStatus();
   if (lockout.isLocked) {
     return {
@@ -60,7 +63,12 @@ export async function verifySecurePin(enteredPin) {
     };
   }
 
-  const storedHash = localStorage.getItem(STORAGE_KEYS.PIN_HASH) || DEFAULT_PIN_HASH;
+  // Priority: 1. Locally customized hash, 2. Dynamic state hash, 3. Global authConfig hash
+  const storedHash =
+    localStorage.getItem(STORAGE_KEYS.PIN_HASH) ||
+    dynamicPinHash ||
+    authConfig?.pinHash;
+
   const inputHash = await hashPin(enteredPin);
 
   if (inputHash === storedHash) {
@@ -96,12 +104,12 @@ export async function verifySecurePin(enteredPin) {
 }
 
 /**
- * Changes and stores the new PIN hash
+ * Computes and locally stores the new PIN hash
  */
 export async function updateSecurePin(newPin) {
   const newHash = await hashPin(newPin);
   localStorage.setItem(STORAGE_KEYS.PIN_HASH, newHash);
-  return true;
+  return newHash;
 }
 
 /**

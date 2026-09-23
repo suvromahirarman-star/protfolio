@@ -3,6 +3,7 @@ import {
   developerInfo as defaultDeveloperInfo,
   socialLinks as defaultSocialLinks,
   projectsData as defaultProjectsData,
+  authConfig as defaultAuthConfig,
 } from '../data/portfolioData';
 import { getAsset, setAsset, clearAllAssets } from '../utils/storage';
 import { verifySecurePin, updateSecurePin, getLockoutStatus } from '../utils/security';
@@ -14,6 +15,7 @@ const STORAGE_KEYS = {
   SOCIAL_LINKS: 'portfolio_social_links',
   PROJECTS: 'portfolio_projects',
   PROFILE_IMAGE: 'portfolio_profile_image',
+  PIN_HASH: 'portfolio_admin_pin_hash',
 };
 
 // Helper to sanitize paths away from legacy /src/assets/
@@ -28,6 +30,7 @@ export function PortfolioProvider({ children }) {
   const [developerInfo, setDeveloperInfo] = useState(defaultDeveloperInfo);
   const [socialLinks, setSocialLinks] = useState(defaultSocialLinks);
   const [projects, setProjects] = useState(defaultProjectsData);
+  const [currentPinHash, setCurrentPinHash] = useState(defaultAuthConfig?.pinHash);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -40,6 +43,13 @@ export function PortfolioProvider({ children }) {
         const savedDevInfo = localStorage.getItem(STORAGE_KEYS.DEV_INFO);
         const savedSocial = localStorage.getItem(STORAGE_KEYS.SOCIAL_LINKS);
         const savedProjects = await getAsset(STORAGE_KEYS.PROJECTS);
+        const savedPinHash = localStorage.getItem(STORAGE_KEYS.PIN_HASH);
+
+        if (savedPinHash) {
+          setCurrentPinHash(savedPinHash);
+        } else if (defaultAuthConfig?.pinHash) {
+          setCurrentPinHash(defaultAuthConfig.pinHash);
+        }
 
         if (savedPhoto) {
           setDeveloperInfo((prev) => ({ ...prev, profileImage: savedPhoto }));
@@ -172,18 +182,20 @@ export function PortfolioProvider({ children }) {
     });
   };
 
-  // Verify PIN with SHA-256 and brute-force protection
+  // Verify PIN with salted SHA-256 and brute-force protection
   const verifyPin = async (inputPin) => {
-    const result = await verifySecurePin(inputPin);
+    const result = await verifySecurePin(inputPin, currentPinHash);
     if (result.success) {
       setIsAdminAuthenticated(true);
     }
     return result;
   };
 
-  // Change Admin PIN (updates SHA-256 hash)
+  // Change Admin PIN (updates salted SHA-256 hash in state & localStorage)
   const changePin = async (newPin) => {
-    await updateSecurePin(newPin);
+    const newHash = await updateSecurePin(newPin);
+    setCurrentPinHash(newHash);
+    return newHash;
   };
 
   // Reset to original factory defaults
@@ -192,6 +204,7 @@ export function PortfolioProvider({ children }) {
     setDeveloperInfo(defaultDeveloperInfo);
     setSocialLinks(defaultSocialLinks);
     setProjects(defaultProjectsData);
+    setCurrentPinHash(defaultAuthConfig?.pinHash);
     setIsAdminAuthenticated(false);
   };
 
@@ -201,6 +214,7 @@ export function PortfolioProvider({ children }) {
       developerInfo,
       socialLinks,
       projects,
+      authConfig: { pinHash: currentPinHash },
     };
   };
 
@@ -211,6 +225,7 @@ export function PortfolioProvider({ children }) {
         developerInfo,
         socialLinks,
         projects,
+        currentPinHash,
         isAdminOpen,
         isAdminAuthenticated,
         setIsAdminOpen,
