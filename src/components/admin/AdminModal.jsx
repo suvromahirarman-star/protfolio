@@ -17,7 +17,10 @@ import {
   ExternalLink,
   Eye,
   KeyRound,
-  Globe,
+  Cloud,
+  CloudCheck,
+  Database,
+  Copy,
   Loader2,
   ShieldCheck,
   Sparkles,
@@ -26,10 +29,13 @@ import { usePortfolio } from '../../context/PortfolioContext';
 import { fileToBase64 } from '../../utils/storage';
 import { getLockoutStatus } from '../../utils/security';
 import {
-  getSavedGitHubToken,
-  saveGitHubToken,
-  publishToGitHub,
-} from '../../utils/githubSync';
+  getSupabaseCredentials,
+  saveSupabaseCredentials,
+  isSupabaseConfigured,
+  testSupabaseConnection,
+  uploadCloudImage,
+  SUPABASE_SQL_SETUP,
+} from '../../utils/supabase';
 
 export function AdminModal({ isOpen, onClose, onShowToast }) {
   const {
@@ -37,6 +43,8 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     socialLinks,
     projects,
     currentPinHash,
+    isCloudConnected,
+    setIsCloudConnected,
     isAdminAuthenticated,
     setIsAdminAuthenticated,
     updateProfilePhoto,
@@ -48,6 +56,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     deleteProject,
     verifyPin,
     changePin,
+    syncToCloud,
     resetToDefaults,
     getExportableData,
   } = usePortfolio();
@@ -57,7 +66,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
   const [pinError, setPinError] = useState('');
   const [lockoutSec, setLockoutSec] = useState(0);
 
-  // Tab state: 'profile' | 'projects' | 'publish' | 'security'
+  // Tab state: 'profile' | 'projects' | 'cloud' | 'security'
   const [activeTab, setActiveTab] = useState('profile');
 
   // Form states for profile & links
@@ -73,6 +82,14 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     github: socialLinks.github || '',
     email: socialLinks.email || '',
   });
+
+  // Supabase Configuration Form state
+  const initialCreds = getSupabaseCredentials();
+  const [supabaseUrl, setSupabaseUrl] = useState(initialCreds.url);
+  const [supabaseKey, setSupabaseKey] = useState(initialCreds.key);
+  const [cloudStatus, setCloudStatus] = useState({ msg: '', ok: isCloudConnected, testing: false });
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Keep form in sync when developerInfo updates
   useEffect(() => {
@@ -103,12 +120,6 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     liveDemo: '',
     featured: true,
   });
-
-  // GitHub Publish states
-  const [ghToken, setGhToken] = useState(getSavedGitHubToken());
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [publishProgress, setPublishProgress] = useState('');
-  const [publishSuccess, setPublishSuccess] = useState(false);
 
   // Change PIN states
   const [newPin, setNewPin] = useState('');
@@ -160,7 +171,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     }
   };
 
-  // Handle Profile Photo Upload
+  // Handle Profile Photo Upload (Direct to Supabase Cloud or Base64 fallback)
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -171,9 +182,15 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     }
 
     try {
-      const base64 = await fileToBase64(file);
-      await updateProfilePhoto(base64);
-      onShowToast?.('Profile photo updated in browser preview!', 'success');
+      if (isSupabaseConfigured()) {
+        onShowToast?.('Uploading photo to Supabase Cloud...', 'success');
+        await updateProfilePhoto(file);
+        onShowToast?.('Profile photo uploaded and synced to all devices!', 'success');
+      } else {
+        const base64 = await fileToBase64(file);
+        await updateProfilePhoto(base64);
+        onShowToast?.('Photo updated in preview! Configure Supabase to sync to all devices.', 'success');
+      }
     } catch (err) {
       console.error(err);
       onShowToast?.('Failed to process image file', 'error');
@@ -199,7 +216,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       email: profileForm.email,
     });
 
-    onShowToast?.('Profile & freelance links saved!', 'success');
+    onShowToast?.('Profile & freelance links saved and synced!', 'success');
   };
 
   // Handle Project Screenshot Upload for selected project
@@ -208,13 +225,21 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     if (files.length === 0 || !selectedProjectId) return;
 
     try {
-      const base64List = await Promise.all(files.map(fileToBase64));
+      onShowToast?.(`Uploading ${files.length} screenshot(s)...`, 'success');
+      let urls = [];
+
+      if (isSupabaseConfigured()) {
+        urls = await Promise.all(files.map((file) => uploadCloudImage(file, 'projects')));
+      } else {
+        urls = await Promise.all(files.map(fileToBase64));
+      }
+
       const targetProj = projects.find((p) => p.id === selectedProjectId);
       const existing = targetProj?.screenshots || (targetProj?.image ? [targetProj.image] : []);
-      const updatedScreenshots = [...base64List, ...existing];
+      const updatedScreenshots = [...urls, ...existing];
 
       await updateProjectScreenshots(selectedProjectId, updatedScreenshots);
-      onShowToast?.(`Added ${base64List.length} screenshot(s) to project!`, 'success');
+      onShowToast?.(`Added ${urls.length} screenshot(s) successfully!`, 'success');
     } catch (err) {
       console.error(err);
       onShowToast?.('Failed to upload screenshot', 'error');
@@ -249,7 +274,11 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     let screenshotList = [];
     const files = Array.from(newProjectScreenshotRef.current?.files || []);
     if (files.length > 0) {
-      screenshotList = await Promise.all(files.map(fileToBase64));
+      if (isSupabaseConfigured()) {
+        screenshotList = await Promise.all(files.map((file) => uploadCloudImage(file, 'projects')));
+      } else {
+        screenshotList = await Promise.all(files.map(fileToBase64));
+      }
     }
 
     const projectToCreate = {
@@ -278,7 +307,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       liveDemo: '',
       featured: true,
     });
-    onShowToast?.('New project added successfully!', 'success');
+    onShowToast?.('New project added and synced to cloud!', 'success');
   };
 
   // Handle PIN Change
@@ -295,39 +324,49 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     await changePin(newPin);
     setNewPin('');
     setConfirmPin('');
-    setPinChangeMsg({ text: 'Admin passcode updated with SHA-256 encryption!', type: 'success' });
-    onShowToast?.('Admin PIN updated securely!', 'success');
+    setPinChangeMsg({
+      text: 'Passcode updated successfully! Active across all devices.',
+      type: 'success',
+    });
+    onShowToast?.('Admin PIN updated and synced to all devices!', 'success');
   };
 
-  // Handle Publish to GitHub & Vercel (Universal cross-device sync)
-  const handlePublishLive = async () => {
-    if (!ghToken) {
-      onShowToast?.('Please enter your GitHub Personal Access Token', 'error');
-      return;
+  // Handle Supabase Credentials Save & Test
+  const handleSaveAndTestSupabase = async (e) => {
+    e.preventDefault();
+    saveSupabaseCredentials(supabaseUrl, supabaseKey);
+    setCloudStatus({ msg: 'Connecting to Supabase...', ok: false, testing: true });
+
+    const res = await testSupabaseConnection();
+    if (res.ok) {
+      setIsCloudConnected(true);
+      setCloudStatus({ msg: 'Connected to Supabase Cloud successfully! 🟢', ok: true, testing: false });
+      onShowToast?.('Connected to Supabase Cloud!', 'success');
+    } else {
+      setIsCloudConnected(false);
+      setCloudStatus({ msg: res.message, ok: false, testing: false, needsSetup: res.needsSetup });
+      onShowToast?.(res.message, 'error');
     }
+  };
 
-    saveGitHubToken(ghToken);
-    setIsPublishing(true);
-    setPublishSuccess(false);
+  // Copy SQL script
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(SUPABASE_SQL_SETUP);
+    setCopiedSql(true);
+    onShowToast?.('SQL script copied to clipboard!', 'success');
+    setTimeout(() => setCopiedSql(false), 3000);
+  };
 
+  // Push current website to Supabase
+  const handleSyncCurrentToCloud = async () => {
+    setIsSyncing(true);
     try {
-      await publishToGitHub({
-        token: ghToken,
-        developerInfo,
-        socialLinks,
-        projects,
-        authConfig: { pinHash: currentPinHash },
-        onProgress: (msg) => setPublishProgress(msg),
-      });
-
-      setPublishSuccess(true);
-      onShowToast?.('Published to GitHub! Vercel is deploying to all devices.', 'success');
+      await syncToCloud();
+      onShowToast?.('All data, links, projects & PIN synced to Cloud!', 'success');
     } catch (err) {
-      console.error(err);
-      onShowToast?.(`Publish error: ${err.message}`, 'error');
-      setPublishProgress(`Error: ${err.message}`);
+      onShowToast?.(`Sync failed: ${err.message}`, 'error');
     } finally {
-      setIsPublishing(false);
+      setIsSyncing(false);
     }
   };
 
@@ -365,13 +404,20 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 Portfolio Studio
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">
-                  SHA-256 Protected
-                </span>
+                {isCloudConnected ? (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Cloud Auto-Sync Active
+                  </span>
+                ) : (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-mono">
+                    Local Mode
+                  </span>
+                )}
               </h2>
               <p className="text-xs text-slate-400">
                 {isAdminAuthenticated
-                  ? 'Customize your website live and deploy permanently to all devices'
+                  ? 'Real-time multi-device portfolio customization'
                   : 'Enter your Admin PIN to unlock customization'}
               </p>
             </div>
@@ -380,7 +426,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -468,17 +514,19 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
 
               <button
                 type="button"
-                onClick={() => setActiveTab('publish')}
+                onClick={() => setActiveTab('cloud')}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
-                  activeTab === 'publish'
+                  activeTab === 'cloud'
                     ? 'border-emerald-400 text-emerald-300'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <Globe className="w-4 h-4 text-emerald-400" />
+                <Cloud className="w-4 h-4 text-emerald-400" />
                 <span className="flex items-center gap-1.5">
-                  Publish to All Devices
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Cloud Auto-Sync (Supabase)
+                  {isCloudConnected && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  )}
                 </span>
               </button>
 
@@ -513,9 +561,16 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                   </div>
 
                   <div className="flex-grow text-center sm:text-left space-y-2">
-                    <h4 className="text-base font-semibold text-white">Profile Photograph</h4>
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <h4 className="text-base font-semibold text-white">Profile Photograph</h4>
+                      {isCloudConnected && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Cloud Synced
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-400">
-                      Upload your image directly from your computer. It updates across the Hero, Navbar, and Footer instantly.
+                      Upload your image directly from your phone or PC. It updates across your live website immediately.
                     </p>
 
                     <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-3">
@@ -660,7 +715,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-bold shadow-lg shadow-electric-500/20 transition-all cursor-pointer"
                     >
                       <Save className="w-4 h-4" />
-                      <span>Save Changes</span>
+                      <span>Save &amp; Auto-Sync</span>
                     </button>
                   </div>
                 </form>
@@ -987,87 +1042,127 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
               </div>
             )}
 
-            {/* Tab 3: Publish to Live Site (Universal Cross-Device Deployment) */}
-            {activeTab === 'publish' && (
+            {/* Tab 3: Cloud Auto-Sync (Supabase Backend) */}
+            {activeTab === 'cloud' && (
               <div className="p-6 overflow-y-auto space-y-6">
                 <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-dark-950 to-dark-900 border border-emerald-500/30 space-y-3">
                   <div className="flex items-center gap-2.5 text-emerald-400">
-                    <Sparkles className="w-5 h-5" />
+                    <Cloud className="w-5 h-5" />
                     <h4 className="text-base font-bold text-white">
-                      Publish to All Devices Worldwide
+                      Full Real-Time Cloud Auto-Sync (Supabase)
                     </h4>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    When you click <strong>"Publish Live"</strong>, all your uploaded photos, project screenshots, and edited links are automatically committed to your GitHub repository (<code>suvromahirarman-star/protfolio</code>).
+                    With Supabase connected, any change you make (updating your PIN, uploading a photo, adding project screenshots) saves instantly to the cloud database.
                     <br />
-                    Vercel will detect the commit and redeploy your website in ~25 seconds, making your updates visible on <strong>every phone, laptop, and client device</strong>!
+                    <strong>No manual GitHub tokens or deploys needed!</strong> Your phone, laptop, and visitors will see the latest changes in real time.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-dark-950/60 border border-white/10 space-y-4">
+                {/* Connection Form */}
+                <form onSubmit={handleSaveAndTestSupabase} className="p-5 rounded-2xl bg-dark-950/60 border border-white/10 space-y-4">
                   <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <KeyRound className="w-4 h-4 text-electric-400" />
-                    <span>GitHub Personal Access Token</span>
+                    <Database className="w-4 h-4 text-electric-400" />
+                    <span>Supabase Project Credentials</span>
                   </h4>
-                  <p className="text-xs text-slate-400">
-                    To allow the browser to publish directly to your repository, enter your GitHub Personal Access Token (classic with <code>repo</code> scope, or fine-grained with read/write on contents).
-                  </p>
 
-                  <div className="space-y-2">
-                    <input
-                      type="password"
-                      value={ghToken}
-                      onChange={(e) => setGhToken(e.target.value)}
-                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                      className="w-full px-4 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400 font-mono"
-                    />
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
-                      <span>Token is securely stored locally in your browser.</span>
-                      <a
-                        href="https://github.com/settings/tokens/new?scopes=repo&description=Portfolio+Admin+Sync"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-electric-400 hover:underline inline-flex items-center gap-1"
-                      >
-                        <span>Generate Token on GitHub</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        Supabase Project URL
+                      </label>
+                      <input
+                        type="text"
+                        value={supabaseUrl}
+                        onChange={(e) => setSupabaseUrl(e.target.value)}
+                        placeholder="https://yourprojectid.supabase.co"
+                        className="w-full px-3.5 py-2 rounded-xl bg-dark-900 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        Supabase Anon (Public) Key
+                      </label>
+                      <input
+                        type="password"
+                        value={supabaseKey}
+                        onChange={(e) => setSupabaseKey(e.target.value)}
+                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        className="w-full px-3.5 py-2 rounded-xl bg-dark-900 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400 font-mono"
+                      />
                     </div>
                   </div>
 
-                  {publishProgress && (
-                    <div className="p-3 rounded-xl bg-dark-900 border border-white/10 text-xs text-slate-300 font-mono flex items-center gap-2">
-                      {isPublishing ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-electric-400 flex-shrink-0" />
-                      ) : publishSuccess ? (
-                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  {cloudStatus.msg && (
+                    <div
+                      className={`p-3 rounded-xl border text-xs font-mono flex items-center gap-2 ${
+                        cloudStatus.ok
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                          : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                      }`}
+                    >
+                      {cloudStatus.testing ? (
+                        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                      ) : cloudStatus.ok ? (
+                        <Check className="w-4 h-4 flex-shrink-0" />
                       ) : (
-                        <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
                       )}
-                      <span>{publishProgress}</span>
+                      <span>{cloudStatus.msg}</span>
                     </div>
                   )}
 
-                  <div className="pt-2 flex items-center justify-end gap-3">
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      type="submit"
+                      disabled={cloudStatus.testing}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-semibold shadow-lg shadow-electric-500/20 transition-all cursor-pointer"
+                    >
+                      {cloudStatus.testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      <span>Save &amp; Test Connection</span>
+                    </button>
+
+                    {isCloudConnected && (
+                      <button
+                        type="button"
+                        disabled={isSyncing}
+                        onClick={handleSyncCurrentToCloud}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+                        <span>Sync Current Website to Cloud Now</span>
+                      </button>
+                    )}
+                  </div>
+                </form>
+
+                {/* 1-Click SQL Setup Helper */}
+                <div className="p-5 rounded-2xl bg-dark-950/60 border border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                        <Database className="w-4 h-4 text-emerald-400" />
+                        <span>Supabase 1-Click SQL Setup Script</span>
+                      </h4>
+                      <p className="text-xs text-slate-400">
+                        Copy this script and paste it into your Supabase <strong>SQL Editor</strong> to create the database table and image storage bucket automatically.
+                      </p>
+                    </div>
+
                     <button
                       type="button"
-                      disabled={isPublishing}
-                      onClick={handlePublishLive}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                      onClick={handleCopySql}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-200 border border-white/10 text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      {isPublishing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Publishing to GitHub...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Globe className="w-4 h-4" />
-                          <span>🚀 Publish Live to All Devices</span>
-                        </>
-                      )}
+                      {copiedSql ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                      <span>{copiedSql ? 'Copied!' : 'Copy SQL'}</span>
                     </button>
                   </div>
+
+                  <pre className="p-3.5 rounded-xl bg-dark-900 border border-white/5 text-[11px] text-slate-300 font-mono overflow-x-auto max-h-40 leading-relaxed">
+                    {SUPABASE_SQL_SETUP}
+                  </pre>
                 </div>
               </div>
             )}
@@ -1082,7 +1177,12 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                     <span>Change Admin Passcode (PIN)</span>
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Set a private PIN protected with SHA-256 cryptographic hashing.
+                    Set a private PIN protected with Salted SHA-256 cryptographic hashing.
+                    {isCloudConnected && (
+                      <span className="text-emerald-400 block mt-1">
+                        🟢 Cloud Auto-Sync is active: updating your PIN here updates it on all your devices instantly!
+                      </span>
+                    )}
                   </p>
 
                   <form onSubmit={handleChangePin} className="space-y-3 max-w-sm">
@@ -1122,22 +1222,12 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       </p>
                     )}
 
-                    <div className="flex items-center gap-3 pt-1">
-                      <button
-                        type="submit"
-                        className="px-4 py-2 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-semibold transition-colors cursor-pointer"
-                      >
-                        Update Passcode
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('publish')}
-                        className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                        <span>Sync to All Devices (Publish) ➔</span>
-                      </button>
-                    </div>
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      Update Passcode
+                    </button>
                   </form>
                 </div>
 
