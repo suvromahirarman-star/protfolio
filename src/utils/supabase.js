@@ -11,6 +11,13 @@ const STORAGE_KEYS = {
   SUPABASE_KEY: 'portfolio_supabase_anon_key',
 };
 
+// ============================================================================
+// PASTE YOUR SUPABASE CREDENTIALS HERE FOR GLOBAL MULTI-DEVICE AUTO-SYNC
+// (Paste your Project URL and Anon Key inside the quotes below)
+// ============================================================================
+export const DEFAULT_SUPABASE_URL = '';
+export const DEFAULT_SUPABASE_ANON_KEY = '';
+
 const BUCKET_NAME = 'portfolio_images';
 const TABLE_NAME = 'portfolio_data';
 
@@ -58,8 +65,8 @@ export function getSupabaseCredentials() {
   const localUrl = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL);
   const localKey = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY);
 
-  const url = localUrl || envUrl || '';
-  const key = localKey || envKey || '';
+  const url = localUrl || envUrl || DEFAULT_SUPABASE_URL || '';
+  const key = localKey || envKey || DEFAULT_SUPABASE_ANON_KEY || '';
 
   return { url: url.trim(), key: key.trim() };
 }
