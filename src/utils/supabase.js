@@ -15,8 +15,8 @@ const STORAGE_KEYS = {
 // PASTE YOUR SUPABASE CREDENTIALS HERE FOR GLOBAL MULTI-DEVICE AUTO-SYNC
 // (Paste your Project URL and Anon Key inside the quotes below)
 // ============================================================================
-export const DEFAULT_SUPABASE_URL = '';
-export const DEFAULT_SUPABASE_ANON_KEY = '';
+export const DEFAULT_SUPABASE_URL = 'https://omiovlhpmlkxvwpaimbx.supabase.co';
+export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_FGJ-s1FY49Rc9R8oo9fVzw_v6M4t_Cj';
 
 const BUCKET_NAME = 'portfolio_images';
 const TABLE_NAME = 'portfolio_data';
@@ -125,7 +125,7 @@ export async function testSupabaseConnection() {
       .limit(1);
 
     if (error) {
-      if (error.code === '42P01') {
+      if (error.code === '42P01' || error.code === 'PGRST205' || (error.message && error.message.includes('portfolio_data'))) {
         return {
           ok: false,
           needsSetup: true,

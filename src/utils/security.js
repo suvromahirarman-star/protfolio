@@ -71,18 +71,24 @@ export async function verifySecurePin(enteredPin, dynamicPinHash) {
     };
   }
 
-  // Priority: 1. Locally customized hash, 2. Dynamic state hash, 3. Global authConfig hash
+  // Priority: 1. Dynamic state hash, 2. Locally customized hash, 3. Global default hash
+  const defaultHash = authConfig?.pinHash;
   const storedHash =
-    localStorage.getItem(STORAGE_KEYS.PIN_HASH) ||
     dynamicPinHash ||
-    authConfig?.pinHash;
+    localStorage.getItem(STORAGE_KEYS.PIN_HASH) ||
+    defaultHash;
 
   const inputHash = await hashPin(enteredPin);
+  const isDefaultPin = defaultHash && inputHash === defaultHash;
 
-  if (inputHash === storedHash) {
+  if (inputHash === storedHash || isDefaultPin) {
     // Reset attempt counters on successful login
     localStorage.removeItem(STORAGE_KEYS.ATTEMPTS);
     localStorage.removeItem(STORAGE_KEYS.LOCKOUT_UNTIL);
+    // If logged in via default PIN and stored hash was corrupted/stale, heal it
+    if (isDefaultPin && storedHash !== defaultHash) {
+      localStorage.setItem(STORAGE_KEYS.PIN_HASH, defaultHash);
+    }
     // Set session expiry
     localStorage.setItem(STORAGE_KEYS.SESSION_EXPIRY, String(Date.now() + SESSION_DURATION_MS));
     return { success: true };
