@@ -9,7 +9,7 @@
 import { authConfig } from '../data/portfolioData';
 
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const LOCKOUT_DURATION_MS = 60 * 1000; // 60 seconds
 const SESSION_DURATION_MS = 20 * 60 * 1000; // 20 minutes
 const STORAGE_KEYS = {
   PIN_HASH: 'portfolio_admin_pin_hash',
@@ -47,6 +47,14 @@ export function getLockoutStatus() {
     return { isLocked: true, remainingSeconds };
   }
   return { isLocked: false, remainingSeconds: 0 };
+}
+
+/**
+ * Resets brute force lockout and attempts
+ */
+export function resetLockout() {
+  localStorage.removeItem(STORAGE_KEYS.ATTEMPTS);
+  localStorage.removeItem(STORAGE_KEYS.LOCKOUT_UNTIL);
 }
 
 /**

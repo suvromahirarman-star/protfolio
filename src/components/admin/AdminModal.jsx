@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '../../context/PortfolioContext';
 import { fileToBase64 } from '../../utils/storage';
-import { getLockoutStatus } from '../../utils/security';
+import { getLockoutStatus, resetLockout } from '../../utils/security';
 import {
   getSupabaseCredentials,
   saveSupabaseCredentials,
@@ -501,9 +501,22 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                   </p>
                 )}
                 {lockoutSec > 0 && (
-                  <p className="text-xs text-amber-400 mt-1 font-mono">
-                    Cooldown active: {lockoutSec}s remaining
-                  </p>
+                  <div className="mt-1.5 flex flex-col items-center gap-1">
+                    <p className="text-xs text-amber-400 font-mono">
+                      Cooldown active: {lockoutSec}s remaining
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetLockout();
+                        setLockoutSec(0);
+                        setPinError('');
+                      }}
+                      className="text-[11px] text-slate-400 hover:text-white underline cursor-pointer"
+                    >
+                      Reset cooldown timer
+                    </button>
+                  </div>
                 )}
               </div>
 
