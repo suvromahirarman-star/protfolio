@@ -79,16 +79,11 @@ export async function verifySecurePin(enteredPin, dynamicPinHash) {
     defaultHash;
 
   const inputHash = await hashPin(enteredPin);
-  const isDefaultPin = defaultHash && inputHash === defaultHash;
 
-  if (inputHash === storedHash || isDefaultPin) {
+  if (inputHash === storedHash) {
     // Reset attempt counters on successful login
     localStorage.removeItem(STORAGE_KEYS.ATTEMPTS);
     localStorage.removeItem(STORAGE_KEYS.LOCKOUT_UNTIL);
-    // If logged in via default PIN and stored hash was corrupted/stale, heal it
-    if (isDefaultPin && storedHash !== defaultHash) {
-      localStorage.setItem(STORAGE_KEYS.PIN_HASH, defaultHash);
-    }
     // Set session expiry
     localStorage.setItem(STORAGE_KEYS.SESSION_EXPIRY, String(Date.now() + SESSION_DURATION_MS));
     return { success: true };
