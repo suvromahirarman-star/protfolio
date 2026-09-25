@@ -26,7 +26,7 @@ export const socialLinks = {
 };
 
 export const authConfig = {
-  "pinHash": "80bd6a678d7064a298b45dc49b9c8c0447ca2d59bd537e482afbc054b4bd0bc3"
+  pinHash: "d2c6a1db88d44e95f6795a77e3805923fbea1bb4efca0d726ee5793adc15b0ee", // Salted SHA-256 for default '1234'
 };
 
 export const quickStats = [
@@ -334,12 +334,61 @@ export const processSteps = [
   { step: "04", title: "Refine & Deliver", description: "I review performance, mobile responsiveness, and API robustness before handoff, ensuring effortless future scaling.", icon: "CheckCircle" },
 ];
 
+export const whyWorkWithMe = [
+  {
+    title: "Clean Code",
+    description: "Readable and maintainable code structured for future improvements, with clear naming and modular separation.",
+    icon: "Code2",
+  },
+  {
+    title: "Responsive Design",
+    description: "Interfaces that work smoothly and beautifully across desktop, tablet, and mobile devices.",
+    icon: "Smartphone",
+  },
+  {
+    title: "Backend Focus",
+    description: "Strong focus on APIs, server-side logic, routing integrity, and application functionality.",
+    icon: "Server",
+  },
+  {
+    title: "Clear Communication",
+    description: "Keep project requirements, progress updates, and technical trade-offs easy to understand without jargon.",
+    icon: "MessageSquare",
+  },
+  {
+    title: "Problem Solving",
+    description: "Focus on practical, reliable solutions that solve real client problems rather than unnecessary complexity.",
+    icon: "Wrench",
+  },
+  {
+    title: "Continuous Improvement",
+    description: "Always improving development skills, exploring modern patterns, and adopting industry best practices.",
+    icon: "TrendingUp",
+  },
+];
+
 export const whyChoosePoints = [
   { title: "Backend + Frontend Synergy", description: "I understand how frontend components request data and how backend controllers process it, eliminating integration headaches.", icon: "Zap" },
   { title: "Clean RESTful Architecture", description: "Adhering to standard HTTP verbs, clean route nesting, and consistent JSON envelope responses that clients love.", icon: "Layers" },
   { title: "Responsive & Performance-Minded", description: "Mobile-first interfaces styled with modern Tailwind utilities for fast loading and zero layout shifts.", icon: "Shield" },
   { title: "Direct & Reliable Communication", description: "Clear milestone updates, transparent timelines, and code that is thoroughly documented for your team.", icon: "Clock" },
 ];
+
+export const freelanceJourney = {
+  title: "Building My Freelance Journey",
+  badge: "Active Freelancer",
+  lead: "I am actively building a professional freelance career on Upwork and Fiverr, bringing solid technical fundamentals, dedicated communication, and a strong work ethic to every project.",
+  paragraphs: [
+    "Rather than displaying fabricated client reviews or exaggerated claims, I believe in letting real code and truthful competence speak for themselves. Every API, route, and interface I develop is built with the care and rigor expected of modern production applications.",
+    "Whether you are an agency in need of a dependable backend pair of hands, an entrepreneur building a custom REST API, or a business owner looking for a responsive modern website, I treat your project with priority and commitment.",
+  ],
+  offerings: [
+    "Direct 1-on-1 collaboration with no middlemen",
+    "Fast turnaround with clear milestone updates",
+    "Clean Git version control and organized repositories",
+    "Post-delivery support and deployment assistance",
+  ],
+};
 
 export const journeyTimeline = [
   { milestone: "HTML, CSS & Web Foundations", year: "Core Fundamentals", detail: "Mastered semantic HTML5 document structures, responsive layouts, CSS Grid, Flexbox, and cross-browser styling." },
@@ -349,11 +398,20 @@ export const journeyTimeline = [
   { milestone: "Full-Stack & Freelance Production", year: "Present & Future", detail: "Building comprehensive web solutions, integrating databases, modern frontend frameworks, and deploying live applications." },
 ];
 
-export const contactOptions = [
-  { id: "backend", label: "Backend API Development" },
-  { id: "crud", label: "CRUD Application" },
-  { id: "frontend", label: "Frontend / Landing Page" },
-  { id: "fullstack", label: "Full-Stack Web App" },
-  { id: "consulting", label: "Code Review / Architecture" },
-  { id: "other", label: "Other Inquiry" },
-];
+export const contactOptions = {
+  projectTypes: [
+    "Backend Development",
+    "REST API",
+    "Frontend Development",
+    "Full-Stack Website",
+    "API Integration",
+    "Other",
+  ],
+  budgetRanges: [
+    "Under $50",
+    "$50 – $100",
+    "$100 – $250",
+    "$250 – $500",
+    "$500+",
+  ],
+};

@@ -131,6 +131,34 @@ export function PortfolioProvider({ children }) {
     loadData();
   }, []);
 
+  // Fetch or refresh live cloud data on demand
+  const refreshCloudData = async () => {
+    if (!isSupabaseConfigured()) return false;
+    try {
+      const cloudData = await fetchCloudPortfolio();
+      if (cloudData) {
+        setIsCloudConnected(true);
+        if (cloudData.developerInfo) {
+          setDeveloperInfo((prev) => ({ ...prev, ...cloudData.developerInfo }));
+        }
+        if (cloudData.socialLinks) {
+          setSocialLinks((prev) => ({ ...prev, ...cloudData.socialLinks }));
+        }
+        if (cloudData.projects && Array.isArray(cloudData.projects)) {
+          setProjects(cloudData.projects);
+        }
+        if (cloudData.pinHash) {
+          setCurrentPinHash(cloudData.pinHash);
+          localStorage.setItem(STORAGE_KEYS.PIN_HASH, cloudData.pinHash);
+        }
+        return true;
+      }
+    } catch (e) {
+      console.warn('refreshCloudData error:', e);
+    }
+    return false;
+  };
+
   // Update profile photo (handles either direct file upload to cloud or base64)
   const updateProfilePhoto = async (fileOrUrl) => {
     let finalUrl = fileOrUrl;
@@ -346,6 +374,7 @@ export function PortfolioProvider({ children }) {
         verifyPin,
         changePin,
         syncToCloud,
+        refreshCloudData,
         resetToDefaults,
         getExportableData,
       }}

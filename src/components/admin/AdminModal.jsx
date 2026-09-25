@@ -57,6 +57,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     verifyPin,
     changePin,
     syncToCloud,
+    refreshCloudData,
     resetToDefaults,
     getExportableData,
   } = usePortfolio();
@@ -90,6 +91,8 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
   const [cloudStatus, setCloudStatus] = useState({ msg: '', ok: isCloudConnected, testing: false });
   const [copiedSql, setCopiedSql] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showQuickCloud, setShowQuickCloud] = useState(false);
+  const [quickCloudConnecting, setQuickCloudConnecting] = useState(false);
 
   // Keep form in sync when developerInfo updates
   useEffect(() => {
@@ -168,6 +171,38 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       if (res.locked) {
         setLockoutSec(res.remainingSeconds || 300);
       }
+    }
+  };
+
+  // Quick cloud sync directly from login gate
+  const handleQuickCloudConnect = async (e) => {
+    e.preventDefault();
+    if (!supabaseUrl.trim() || !supabaseKey.trim()) {
+      setPinError('Please enter both Supabase URL and Anon Key');
+      return;
+    }
+    setQuickCloudConnecting(true);
+    try {
+      saveSupabaseCredentials(supabaseUrl.trim(), supabaseKey.trim());
+      const test = await testSupabaseConnection();
+      if (!test.ok) {
+        setPinError(`Supabase connection failed: ${test.message}`);
+        setQuickCloudConnecting(false);
+        return;
+      }
+      setIsCloudConnected(true);
+      await refreshCloudData();
+      // Reset any local lockout
+      localStorage.removeItem('portfolio_admin_attempts');
+      localStorage.removeItem('portfolio_admin_lockout_until');
+      setLockoutSec(0);
+      setPinError('');
+      onShowToast?.('Supabase Cloud connected! Latest PIN & data synced to this device.', 'success');
+      setShowQuickCloud(false);
+    } catch (err) {
+      setPinError(`Error connecting: ${err.message}`);
+    } finally {
+      setQuickCloudConnecting(false);
     }
   };
 
@@ -479,6 +514,63 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
               >
                 Unlock Studio
               </button>
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowQuickCloud((prev) => !prev)}
+                  className="text-xs text-slate-400 hover:text-electric-300 transition-colors inline-flex items-center gap-1.5 cursor-pointer py-1"
+                >
+                  <Cloud className="w-3.5 h-3.5 text-electric-400" />
+                  <span>{showQuickCloud ? 'Hide Cloud Setup' : 'First time on this device? Connect Cloud'}</span>
+                </button>
+              </div>
+
+              {showQuickCloud && (
+                <div className="mt-3 p-4 rounded-xl bg-dark-950/90 border border-white/10 text-left space-y-3">
+                  <p className="text-[11px] text-slate-400">
+                    Connect your Supabase project on this device to automatically sync your cloud-updated PIN, bio, and projects:
+                  </p>
+                  <div>
+                    <label className="text-[11px] font-mono text-slate-300 block mb-1">Supabase URL</label>
+                    <input
+                      type="url"
+                      value={supabaseUrl}
+                      onChange={(e) => setSupabaseUrl(e.target.value)}
+                      placeholder="https://xyz.supabase.co"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-dark-900 border border-white/10 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-electric-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-mono text-slate-300 block mb-1">Supabase Anon Key</label>
+                    <input
+                      type="password"
+                      value={supabaseKey}
+                      onChange={(e) => setSupabaseKey(e.target.value)}
+                      placeholder="eyJhbGciOiJIUzI1NiIsIn..."
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-dark-900 border border-white/10 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-electric-400"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={quickCloudConnecting}
+                    onClick={handleQuickCloudConnect}
+                    className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {quickCloudConnecting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Connecting &amp; Syncing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CloudCheck className="w-3.5 h-3.5" />
+                        <span>Connect &amp; Sync Cloud PIN</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         ) : (
