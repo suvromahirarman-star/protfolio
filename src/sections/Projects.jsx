@@ -21,7 +21,7 @@ export function Projects({ onOpenModal }) {
   const otherProjects = filteredProjects.filter((p) => !p.featured);
 
   return (
-    <section id="projects" className="py-24 bg-[#0A0A0A] relative border-b border-[#262626]">
+    <section id="projects" className="py-24 bg-[#0A0A0A] relative border-y border-[#262626]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">

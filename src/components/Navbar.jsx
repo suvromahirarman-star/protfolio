@@ -37,7 +37,7 @@ export function Navbar({ activeSection = 'home' }) {
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         scrolled
-          ? 'py-3.5 bg-[#0A0A0A]/90 backdrop-blur-xl border-b border-white/10 shadow-xl shadow-black/40'
+          ? 'py-3.5 bg-[#FAFAFA]/90 backdrop-blur-xl border-b border-[#E5E5E5] shadow-sm'
           : 'py-5 bg-transparent'
       }`}
     >
@@ -46,26 +46,26 @@ export function Navbar({ activeSection = 'home' }) {
         <a
           href="#home"
           onClick={(e) => handleNavClick(e, '#home')}
-          className="flex items-center gap-2.5 group"
+          className="flex items-center gap-2.5 group cursor-pointer"
           aria-label="Mahir Arman Suvro Homepage"
         >
-          <div className="w-9 h-9 rounded-lg bg-[#171717] border border-[#262626] flex items-center justify-center font-bold text-sm tracking-tight text-white group-hover:border-[#FF6B00]/60 transition-colors shadow-sm">
+          <div className="w-9 h-9 rounded-lg bg-[#F3F3F3] border border-[#E5E5E5] flex items-center justify-center font-bold text-sm tracking-tight text-[#0A0A0A] group-hover:border-[#FF6B00]/60 transition-colors shadow-sm">
             <span>{developerInfo.initials || 'MAS'}</span>
             <span className="text-[#FF6B00] -ml-0.5">.</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-white text-sm sm:text-base tracking-tight flex items-center gap-1 group-hover:text-[#FF8533] transition-colors">
+            <span className="font-bold text-[#0A0A0A] text-sm sm:text-base tracking-tight flex items-center gap-1 group-hover:text-[#FF6B00] transition-colors">
               {developerInfo.name}
               <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
             </span>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 hidden sm:block">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#737373] hidden sm:block">
               {developerInfo.title || 'Full-Stack Developer'}
             </span>
           </div>
         </a>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 bg-[#121212] p-1.5 rounded-full border border-[#262626] shadow-inner backdrop-blur-md">
+        <nav className="hidden md:flex items-center gap-1 bg-[#F3F3F3] p-1.5 rounded-full border border-[#E5E5E5] shadow-sm backdrop-blur-md">
           {navLinks.map((link) => {
             const isActive = activeSection === link.href.replace('#', '');
             return (
@@ -75,8 +75,8 @@ export function Navbar({ activeSection = 'home' }) {
                 onClick={(e) => handleNavClick(e, link.href)}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? 'bg-[#FF6B00] text-white font-semibold shadow-md shadow-[#FF6B00]/25'
-                    : 'text-neutral-300 hover:text-white hover:bg-white/5'
+                    ? 'bg-[#FF6B00] text-white font-semibold shadow-sm shadow-[#FF6B00]/25'
+                    : 'text-[#525252] hover:text-[#0A0A0A] hover:bg-black/5'
                 }`}
               >
                 {link.name}
@@ -109,18 +109,18 @@ export function Navbar({ activeSection = 'home' }) {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl text-neutral-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-[#0A0A0A] hover:bg-black/5 transition-colors cursor-pointer"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? <X className="w-5 h-5 text-[#0A0A0A]" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Animated Dropdown Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-4 pt-3 pb-6 bg-[#0A0A0A]/98 border-b border-[#262626] shadow-2xl backdrop-blur-2xl transition-all">
+        <div className="md:hidden px-4 pt-3 pb-6 bg-[#FAFAFA]/98 border-b border-[#E5E5E5] shadow-xl backdrop-blur-2xl transition-all">
           <nav className="flex flex-col gap-1.5">
             {navLinks.map((link) => {
               const isActive = activeSection === link.href.replace('#', '');
@@ -132,14 +132,14 @@ export function Navbar({ activeSection = 'home' }) {
                   className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-[#FF6B00] text-white font-semibold shadow-sm'
-                      : 'text-neutral-300 hover:bg-white/5 hover:text-white'
+                      : 'text-[#525252] hover:bg-[#F3F3F3] hover:text-[#0A0A0A]'
                   }`}
                 >
                   {link.name}
                 </a>
               );
             })}
-            <div className="pt-3 mt-2 border-t border-[#262626]">
+            <div className="pt-3 mt-2 border-t border-[#E5E5E5]">
               <a
                 href="#contact"
                 onClick={(e) => handleNavClick(e, '#contact')}

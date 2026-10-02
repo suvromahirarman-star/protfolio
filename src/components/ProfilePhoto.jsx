@@ -5,7 +5,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 /**
  * ProfilePhoto component
  * Displays Mahir Arman Suvro's real professional photograph.
- * White + Black + Signature Orange styling with ambient accent glow.
+ * White (#FAFAFA) + Black (#0A0A0A) + Cards (#F3F3F3) + Signature Orange (#FF6B00) styling.
  */
 export function ProfilePhoto({ className = '', size = 'lg', priority = false }) {
   const { developerInfo } = usePortfolio();
@@ -31,15 +31,15 @@ export function ProfilePhoto({ className = '', size = 'lg', priority = false }) 
 
   return (
     <div className={`relative group ${className}`}>
-      {/* Background ambient orange glow */}
+      {/* Background subtle orange glow */}
       <div 
-        className="absolute -inset-1.5 bg-gradient-to-r from-[#FF6B00]/25 to-[#FF8533]/15 rounded-3xl blur-2xl opacity-60 group-hover:opacity-90 transition duration-500"
+        className="absolute -inset-1.5 bg-gradient-to-r from-[#FF6B00]/20 to-[#FF8533]/10 rounded-3xl blur-2xl opacity-60 group-hover:opacity-90 transition duration-500"
         aria-hidden="true"
       />
 
       {/* Outer frame */}
-      <div className={`relative ${sizeClasses[size] || sizeClasses.lg} rounded-2xl sm:rounded-3xl p-1 bg-gradient-to-br from-[#FF6B00]/40 via-[#171717] to-[#262626] shadow-2xl transition-transform duration-500 group-hover:scale-[1.01]`}>
-        <div className="w-full h-full rounded-[14px] sm:rounded-[22px] overflow-hidden bg-[#121212] flex items-center justify-center relative border border-white/10">
+      <div className={`relative ${sizeClasses[size] || sizeClasses.lg} rounded-2xl sm:rounded-3xl p-1 bg-gradient-to-br from-[#FF6B00]/50 via-[#E5E5E5] to-[#D4D4D4] shadow-lg transition-transform duration-500 group-hover:scale-[1.01]`}>
+        <div className="w-full h-full rounded-[14px] sm:rounded-[22px] overflow-hidden bg-[#F3F3F3] flex items-center justify-center relative border border-[#E5E5E5]">
           {!imageError ? (
             <img
               src={srcAttempt}
@@ -50,25 +50,23 @@ export function ProfilePhoto({ className = '', size = 'lg', priority = false }) 
             />
           ) : (
             /* Fallback developer avatar badge */
-            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[#121212] relative overflow-hidden">
-              <div className="absolute inset-0 bg-grid-pattern opacity-30" />
-              
-              <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#1A1A1A] border border-[#FF6B00]/30 flex items-center justify-center mb-3 shadow-inner">
-                <span className="text-3xl sm:text-4xl font-extrabold tracking-wider text-white">
+            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[#F3F3F3] relative overflow-hidden">
+              <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border border-[#E5E5E5] flex items-center justify-center mb-3 shadow-xs">
+                <span className="text-3xl sm:text-4xl font-extrabold tracking-wider text-[#0A0A0A]">
                   {developerInfo?.initials || 'MAS'}
                   <span className="text-[#FF6B00]">.</span>
                 </span>
               </div>
 
               <div className="relative z-10">
-                <h3 className="text-lg font-bold text-white tracking-tight">
+                <h3 className="text-lg font-bold text-[#0A0A0A] tracking-tight">
                   {developerInfo?.name || 'Mahir Arman Suvro'}
                 </h3>
-                <p className="text-xs text-[#FF8533] font-mono mt-0.5">
+                <p className="text-xs text-[#FF6B00] font-mono mt-0.5">
                   {developerInfo?.title || 'Full-Stack Developer'}
                 </p>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium mt-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-emerald-500/30 text-emerald-600 text-[11px] font-medium mt-3 shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   {developerInfo?.availability || 'Available for Hire'}
                 </div>
               </div>
@@ -76,9 +74,9 @@ export function ProfilePhoto({ className = '', size = 'lg', priority = false }) 
           )}
 
           {/* Quick badge in corner */}
-          <div className="absolute bottom-3 right-3 z-10 hidden sm:flex items-center gap-1.5 bg-[#0A0A0A]/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-lg">
+          <div className="absolute bottom-3 right-3 z-10 hidden sm:flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#E5E5E5] shadow-md">
             <Terminal className="w-3.5 h-3.5 text-[#FF6B00]" />
-            <span className="text-[11px] font-mono font-medium text-neutral-200">
+            <span className="text-[11px] font-mono font-medium text-[#0A0A0A]">
               Backend • Node.js
             </span>
           </div>

@@ -4,28 +4,29 @@
 
 @layer base {
   :root {
+    --bg-main: #FAFAFA;
     --bg-dark: #0A0A0A;
+    --card-light: #F3F3F3;
     --card-dark: #121212;
-    --card-surface: #171717;
-    --card-border: #262626;
+    --border-light: #E5E5E5;
+    --border-dark: #262626;
+    --text-primary: #0A0A0A;
+    --text-secondary: #525252;
+    --text-muted: #737373;
     --orange-primary: #FF6B00;
     --orange-hover: #FF8533;
-    --orange-muted: rgba(255, 107, 0, 0.12);
   }
 
   html {
     scroll-behavior: smooth;
-    color-scheme: dark;
-    background-color: #0A0A0A;
+    background-color: #FAFAFA;
+    color: #0A0A0A;
   }
 
   body {
-    background-color: #0A0A0A;
-    background-image: 
-      radial-gradient(at 50% 0%, rgba(255, 107, 0, 0.06) 0px, transparent 60%),
-      radial-gradient(at 100% 100%, rgba(255, 107, 0, 0.03) 0px, transparent 50%);
-    background-attachment: fixed;
-    color: #F5F5F5;
+    background-color: #FAFAFA;
+    color: #0A0A0A;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   /* Custom scrollbar */
@@ -33,12 +34,12 @@
     width: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #0A0A0A;
+    background: #FAFAFA;
   }
   ::-webkit-scrollbar-thumb {
-    background: #262626;
+    background: #D4D4D4;
     border-radius: 4px;
-    border: 2px solid #0A0A0A;
+    border: 2px solid #FAFAFA;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #FF6B00;
@@ -46,59 +47,30 @@
 }
 
 @layer utilities {
-  .bg-grid-pattern {
+  .bg-grid-pattern-light {
+    background-size: 40px 40px;
+    background-image: 
+      linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  }
+
+  .bg-grid-pattern-dark {
     background-size: 40px 40px;
     background-image: 
       linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   }
 
-  .card-premium {
-    background: #121212;
-    border: 1px solid #262626;
+  .card-premium-light {
+    background: #F3F3F3;
+    border: 1px solid #E5E5E5;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .card-premium:hover {
+  .card-premium-light:hover {
     border-color: rgba(255, 107, 0, 0.4);
-    box-shadow: 0 10px 30px -10px rgba(255, 107, 0, 0.15);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.06);
     transform: translateY(-2px);
-  }
-
-  .glass-nav {
-    background: rgba(10, 10, 10, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 40%, #FF6B00 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .text-orange-gradient {
-    background: linear-gradient(135deg, #FF8533 0%, #FF6B00 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .border-glow-orange {
-    position: relative;
-  }
-  .border-glow-orange::after {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    background: linear-gradient(135deg, rgba(255, 107, 0, 0.5), rgba(255, 133, 51, 0.2));
-    border-radius: inherit;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-  }
-  .border-glow-orange:hover::after {
-    opacity: 1;
   }
 }
 

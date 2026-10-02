@@ -16,52 +16,53 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-brand-black border-t border-white/10 pt-16 pb-12 text-brand-muted">
+    <footer className="bg-[#0A0A0A] border-t border-[#262626] pt-16 pb-12 text-neutral-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-white/5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-[#262626]">
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/30 flex items-center justify-center font-bold text-sm tracking-wider text-brand-orange">
-                {developerInfo.initials || 'MAS'}
+              <div className="w-10 h-10 rounded-xl bg-[#171717] border border-[#262626] flex items-center justify-center font-bold text-sm tracking-wider text-white">
+                <span>{developerInfo.initials || 'MAS'}</span>
+                <span className="text-[#FF6B00]">.</span>
               </div>
               <span className="text-xl font-extrabold text-white tracking-tight">
                 {developerInfo.name}
               </span>
             </div>
-            <p className="text-sm text-brand-muted max-w-sm leading-relaxed">
-              Full-Stack Web Developer specialized in building scalable Node.js & Express REST APIs, modern responsive frontend interfaces, and production-ready applications.
+            <p className="text-sm text-neutral-400 max-w-sm leading-relaxed">
+              Full-Stack Web Developer specialized in building scalable Node.js &amp; Express REST APIs, modern responsive frontend interfaces, and production-ready applications.
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
                 href={socialLinks.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl bg-brand-card border border-white/10 hover:border-brand-orange/40 hover:text-white flex items-center justify-center transition-all duration-200"
+                className="w-10 h-10 rounded-xl bg-[#121212] border border-[#262626] hover:border-[#FF6B00]/40 hover:text-white flex items-center justify-center transition-all duration-200"
                 aria-label="GitHub Profile"
                 title="GitHub"
               >
-                <GithubIcon className="w-4 h-4" />
+                <GithubIcon className="w-4 h-4 text-white" />
               </a>
               <a
                 href={socialLinks.upwork}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl bg-brand-card border border-white/10 hover:border-[#14a800]/50 hover:text-[#14a800] flex items-center justify-center transition-all duration-200"
+                className="w-10 h-10 rounded-xl bg-[#121212] border border-[#262626] hover:border-[#14a800]/50 hover:text-[#14a800] flex items-center justify-center transition-all duration-200"
                 aria-label="Upwork Profile"
                 title="Hire on Upwork"
               >
-                <UpworkIcon className="w-4 h-4" />
+                <UpworkIcon className="w-4 h-4 text-[#14a800]" />
               </a>
               <a
                 href={socialLinks.fiverr}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl bg-brand-card border border-white/10 hover:border-[#1dbf73]/50 hover:text-[#1dbf73] flex items-center justify-center transition-all duration-200"
+                className="w-10 h-10 rounded-xl bg-[#121212] border border-[#262626] hover:border-[#1dbf73]/50 hover:text-[#1dbf73] flex items-center justify-center transition-all duration-200"
                 aria-label="Fiverr Profile"
                 title="Hire on Fiverr"
               >
-                <FiverrIcon className="w-4 h-4" />
+                <FiverrIcon className="w-4 h-4 text-[#1dbf73]" />
               </a>
             </div>
           </div>
@@ -84,7 +85,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => scrollTo(item.id)}
-                    className="hover:text-brand-orange transition-colors cursor-pointer text-left"
+                    className="hover:text-[#FF6B00] transition-colors cursor-pointer text-left"
                   >
                     {item.name}
                   </button>
@@ -99,38 +100,38 @@ export function Footer() {
               Core Capabilities
             </h4>
             <ul className="space-y-2.5 text-sm">
-              <li className="hover:text-white transition-colors">REST & CRUD API Design</li>
+              <li className="hover:text-white transition-colors">REST &amp; CRUD API Design</li>
               <li className="hover:text-white transition-colors">Express Backend Architecture</li>
               <li className="hover:text-white transition-colors">Modern Responsive Frontend</li>
               <li className="hover:text-white transition-colors">Database Integration</li>
-              <li className="hover:text-white transition-colors">Website Bug Fixing & Tuning</li>
+              <li className="hover:text-white transition-colors">Website Bug Fixing &amp; Tuning</li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Row */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-neutral-400">
           <p>© {new Date().getFullYear()} {developerInfo.name}. All rights reserved.</p>
 
           <div className="flex items-center gap-4">
-            <span className="text-brand-muted">
-              Designed with <span className="text-brand-orange font-semibold">White + Black + Orange</span>
+            <span>
+              Theme: <span className="text-white font-medium">Off-White</span> + <span className="text-white font-medium">Black</span> + <span className="text-[#FF6B00] font-medium">Orange</span>
             </span>
             <span>•</span>
             <button
               type="button"
               onClick={() => setIsAdminOpen(true)}
-              className="hover:text-brand-orange transition-colors inline-flex items-center gap-1.5 text-brand-muted hover:text-white cursor-pointer"
+              className="hover:text-[#FF6B00] transition-colors inline-flex items-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer"
               title="Admin Customization Studio"
             >
-              <Lock className="w-3 h-3 text-brand-orange" />
+              <Lock className="w-3 h-3 text-[#FF6B00]" />
               <span>Studio</span>
             </button>
             <span>•</span>
             <button
               type="button"
               onClick={scrollToTop}
-              className="hover:text-brand-orange transition-colors inline-flex items-center gap-1 cursor-pointer"
+              className="hover:text-[#FF6B00] transition-colors inline-flex items-center gap-1 cursor-pointer"
             >
               <span>Back to Top</span>
               <ArrowUp className="w-3 h-3" />

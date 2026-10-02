@@ -73,7 +73,7 @@ function PortfolioApp() {
   };
 
   return (
-    <div className="relative min-h-screen bg-brand-black text-white flex flex-col justify-between selection:bg-brand-orange/30 selection:text-brand-orange">
+    <div className="relative min-h-screen bg-[#FAFAFA] text-[#0A0A0A] flex flex-col justify-between selection:bg-[#FF6B00]/20 selection:text-[#FF6B00]">
       {/* Sticky Navigation */}
       <Navbar activeSection={activeSection} />
 
