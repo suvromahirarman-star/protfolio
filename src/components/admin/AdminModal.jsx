@@ -36,6 +36,7 @@ import {
   uploadCloudImage,
   SUPABASE_SQL_SETUP,
 } from '../../utils/supabase';
+import { formatProjectJs, downloadPortfolioDataFile } from '../../utils/codeExport';
 
 export function AdminModal({ isOpen, onClose, onShowToast }) {
   const {
@@ -122,6 +123,7 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     github: '',
     liveDemo: '',
     featured: true,
+    image: '',
   });
 
   // Change PIN states
@@ -316,6 +318,8 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       }
     }
 
+    const primaryCover = newProjectForm.image?.trim() || screenshotList[0] || '/projects/cineverse.png';
+
     const projectToCreate = {
       title: newProjectForm.title,
       category: newProjectForm.category,
@@ -325,8 +329,8 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       github: newProjectForm.github || null,
       liveDemo: newProjectForm.liveDemo || null,
       featured: newProjectForm.featured,
-      image: screenshotList[0] || '/projects/travello-tour.png',
-      screenshots: screenshotList,
+      image: primaryCover,
+      screenshots: screenshotList.length > 0 ? screenshotList : [primaryCover],
       features: ['Clean code architecture', 'Responsive UI & modern design'],
     };
 
@@ -341,8 +345,9 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
       github: '',
       liveDemo: '',
       featured: true,
+      image: '',
     });
-    onShowToast?.('New project added and synced to cloud!', 'success');
+    onShowToast?.('New project added and saved!', 'success');
   };
 
   // Handle PIN Change
@@ -417,6 +422,25 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
     a.click();
     URL.revokeObjectURL(url);
     onShowToast?.('Backup JSON downloaded!', 'success');
+  };
+
+  // Handle Copy Project JavaScript Code
+  const handleCopyProjectCode = (project) => {
+    if (!project) return;
+    const code = formatProjectJs(project);
+    navigator.clipboard.writeText(code);
+    onShowToast?.(`Copied code snippet for "${project.title}"!`, 'success');
+  };
+
+  // Handle Download Complete portfolioData.js
+  const handleDownloadPortfolioData = () => {
+    downloadPortfolioDataFile({
+      developerInfo,
+      socialLinks,
+      authConfig: { pinHash: currentPinHash },
+      projects,
+    });
+    onShowToast?.('portfolioData.js generated & downloaded!', 'success');
   };
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId) || projects[0];
@@ -839,14 +863,26 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                           Select a project to upload screenshots or edit descriptions and links.
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsAddingProject(true)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 border border-electric-400/30 text-xs font-semibold transition-colors cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>Add New Project</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleDownloadPortfolioData}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-950 hover:bg-dark-900 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer"
+                          title="Download complete, production-verified portfolioData.js for Vercel"
+                        >
+                          <Download className="w-3.5 h-3.5 text-electric-400" />
+                          <span className="hidden sm:inline">Export portfolioData.js</span>
+                          <span className="sm:hidden">Export</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingProject(true)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-electric-500/20 hover:bg-electric-500/30 text-electric-300 border border-electric-400/30 text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Add New Project</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Project Selector Pills */}
@@ -880,19 +916,31 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                             </h3>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Delete project "${selectedProject.title}"?`)) {
-                                deleteProject(selectedProject.id);
-                                onShowToast?.('Project deleted', 'success');
-                              }
-                            }}
-                            className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                            title="Delete this project"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleCopyProjectCode(selectedProject)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-900 hover:bg-dark-850 text-slate-300 hover:text-white border border-white/10 text-xs font-medium transition-colors cursor-pointer"
+                              title="Copy JavaScript object snippet for portfolioData.js"
+                            >
+                              <Copy className="w-3.5 h-3.5 text-electric-400" />
+                              <span>Copy Code</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Delete project "${selectedProject.title}"?`)) {
+                                  deleteProject(selectedProject.id);
+                                  onShowToast?.('Project deleted', 'success');
+                                }
+                              }}
+                              className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              title="Delete this project"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Screenshots Gallery for this project */}
@@ -955,8 +1003,23 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                           </div>
                         </div>
 
-                        {/* Quick Links Edit for this project */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        {/* Quick Links & Cover Image Edit for this project */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                          <div>
+                            <label className="block text-xs font-medium text-slate-300 mb-1">
+                              Cover Image Path / URL
+                            </label>
+                            <input
+                              type="text"
+                              value={selectedProject.image || ''}
+                              onChange={(e) =>
+                                updateProject(selectedProject.id, { image: e.target.value })
+                              }
+                              placeholder="/projects/cineverse.png"
+                              className="w-full px-3 py-2 rounded-xl bg-dark-900 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400 font-mono"
+                            />
+                          </div>
+
                           <div>
                             <label className="block text-xs font-medium text-slate-300 mb-1">
                               GitHub Repository URL
@@ -1084,19 +1147,37 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-medium text-slate-300 mb-1">
-                        Technologies (comma separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={newProjectForm.technologies}
-                        onChange={(e) =>
-                          setNewProjectForm({ ...newProjectForm, technologies: e.target.value })
-                        }
-                        placeholder="Node.js, Express, MongoDB"
-                        className="w-full px-3 py-2 rounded-xl bg-dark-950 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center justify-between">
+                          <span>Cover Image Path / URL</span>
+                          <span className="text-[10px] text-slate-400 font-normal">e.g. /projects/app.png</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={newProjectForm.image}
+                          onChange={(e) =>
+                            setNewProjectForm({ ...newProjectForm, image: e.target.value })
+                          }
+                          placeholder="/projects/my-new-app.png or https://..."
+                          className="w-full px-3 py-2 rounded-xl bg-dark-950 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400 font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-300 mb-1">
+                          Technologies (comma separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={newProjectForm.technologies}
+                          onChange={(e) =>
+                            setNewProjectForm({ ...newProjectForm, technologies: e.target.value })
+                          }
+                          placeholder="Node.js, Express, MongoDB"
+                          className="w-full px-3 py-2 rounded-xl bg-dark-950 border border-white/10 text-xs text-white focus:outline-none focus:border-electric-400"
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -1334,6 +1415,33 @@ export function AdminModal({ isOpen, onClose, onShowToast }) {
                       Update Passcode
                     </button>
                   </form>
+                </div>
+
+                {/* Production portfolioData.js Export */}
+                <div className="p-5 rounded-2xl bg-electric-500/10 border border-electric-500/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-electric-400">
+                      <Download className="w-5 h-5" />
+                      <h4 className="text-sm font-bold text-white">
+                        Export Production portfolioData.js
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      100% Vercel Safe
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Downloads a verified <code>portfolioData.js</code> containing all your custom projects, profile data, and settings with all required Vite exports guaranteed intact. Drop it into <code>src/data/portfolioData.js</code> to deploy permanently to Vercel without build errors.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadPortfolioData}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-electric-500 hover:bg-electric-400 text-white text-xs font-bold shadow-lg shadow-electric-500/20 transition-all cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download portfolioData.js</span>
+                  </button>
                 </div>
 
                 {/* Export / Backup */}
