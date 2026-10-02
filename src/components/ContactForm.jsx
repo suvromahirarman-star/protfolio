@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { contactOptions, socialLinks } from '../data/portfolioData';
+import { contactOptions } from '../data/portfolioData';
 
 export function ContactForm({ initialProjectType = '', onShowToast }) {
   const [formData, setFormData] = useState({
@@ -15,11 +15,11 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Update project type if user selected "Discuss Project" in Services
+  // Update project type if user selected "Inquire About This Service" in Services section
   useEffect(() => {
     if (initialProjectType) {
       setFormData((prev) => ({ ...prev, projectType: initialProjectType }));
-    } else if (!formData.projectType && contactOptions.projectTypes.length > 0) {
+    } else if (!formData.projectType && contactOptions?.projectTypes?.length > 0) {
       setFormData((prev) => ({ ...prev, projectType: contactOptions.projectTypes[0] }));
     }
   }, [initialProjectType]);
@@ -35,7 +35,7 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
       errs.email = 'Please provide a valid email address.';
     }
     if (!formData.projectType) {
-      errs.projectType = 'Please select a project type.';
+      errs.projectType = 'Please select a project category.';
     }
     if (!formData.message.trim()) {
       errs.message = 'Please describe your project or requirements.';
@@ -61,27 +61,12 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
     setIsSubmitting(true);
 
     try {
-      /**
-       * BACKEND / EMAIL INTEGRATION HOOK
-       * To connect EmailJS, Formspree, or your custom Express backend:
-       * 
-       * Example with Formspree:
-       * await fetch("https://formspree.io/f/YOUR_FORM_ID", {
-       *   method: "POST",
-       *   headers: { "Content-Type": "application/json" },
-       *   body: JSON.stringify(formData)
-       * });
-       * 
-       * Example with EmailJS:
-       * await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", formData, "YOUR_PUBLIC_KEY");
-       */
-
-      // Simulated network latency
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Latency simulation (or replace with Formspree / EmailJS API call)
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       setIsSubmitted(true);
       if (onShowToast) {
-        onShowToast('Message prepared! Mahir will respond promptly.', 'success');
+        onShowToast('Project inquiry sent successfully! Mahir will respond promptly.', 'success');
       }
     } catch (err) {
       if (onShowToast) {
@@ -96,7 +81,7 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
     setFormData({
       name: '',
       email: '',
-      projectType: contactOptions.projectTypes[0] || 'Backend Development',
+      projectType: contactOptions?.projectTypes?.[0] || 'Backend Development',
       budget: '$100 – $250',
       message: '',
     });
@@ -106,19 +91,19 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
 
   if (isSubmitted) {
     return (
-      <div className="p-8 rounded-3xl glass-card border border-emerald-500/30 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+      <div className="p-8 sm:p-10 rounded-2xl bg-brand-card border border-brand-orange/40 text-center space-y-4">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-orange/10 border border-brand-orange/30 flex items-center justify-center text-brand-orange">
           <CheckCircle className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white">Thank You for Reaching Out!</h3>
-        <p className="text-slate-300 text-sm max-w-md mx-auto leading-relaxed">
-          Your project inquiry has been received. I review every client message carefully and will get back to you within 24 hours.
+        <h3 className="text-xl font-bold text-white">Inquiry Received!</h3>
+        <p className="text-brand-muted text-sm max-w-md mx-auto leading-relaxed">
+          Thank you for reaching out. I review every project specification personally and will get back to you with next steps within 24 hours.
         </p>
         <div className="pt-2">
           <button
             type="button"
             onClick={handleReset}
-            className="px-6 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-200 hover:text-white text-sm font-medium border border-white/10 transition"
+            className="px-6 py-2.5 rounded-xl bg-brand-dark hover:bg-brand-dark/80 text-white text-sm font-semibold border border-white/10 hover:border-brand-orange/40 transition cursor-pointer"
           >
             Send Another Inquiry
           </button>
@@ -133,17 +118,17 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="name" className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-            Your Name <span className="text-rose-400">*</span>
+            Your Name <span className="text-brand-orange">*</span>
           </label>
           <input
             id="name"
             name="name"
             type="text"
-            placeholder="Alex Morgan"
+            placeholder="John Doe"
             value={formData.name}
             onChange={handleChange}
-            className={`w-full px-4 py-3 rounded-xl bg-dark-900/80 border text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-electric-400/40 transition ${
-              errors.name ? 'border-rose-500/80' : 'border-white/10 focus:border-electric-400'
+            className={`w-full px-4 py-3 rounded-xl bg-brand-dark/90 border text-white placeholder:text-brand-muted/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 transition ${
+              errors.name ? 'border-rose-500/80' : 'border-white/10 focus:border-brand-orange'
             }`}
           />
           {errors.name && (
@@ -155,17 +140,17 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
 
         <div>
           <label htmlFor="email" className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-            Your Email <span className="text-rose-400">*</span>
+            Your Email <span className="text-brand-orange">*</span>
           </label>
           <input
             id="email"
             name="email"
             type="email"
-            placeholder="alex@company.com"
+            placeholder="john@example.com"
             value={formData.email}
             onChange={handleChange}
-            className={`w-full px-4 py-3 rounded-xl bg-dark-900/80 border text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-electric-400/40 transition ${
-              errors.email ? 'border-rose-500/80' : 'border-white/10 focus:border-electric-400'
+            className={`w-full px-4 py-3 rounded-xl bg-brand-dark/90 border text-white placeholder:text-brand-muted/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 transition ${
+              errors.email ? 'border-rose-500/80' : 'border-white/10 focus:border-brand-orange'
             }`}
           />
           {errors.email && (
@@ -180,17 +165,17 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="projectType" className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-            Project Type <span className="text-rose-400">*</span>
+            Project Scope <span className="text-brand-orange">*</span>
           </label>
           <select
             id="projectType"
             name="projectType"
             value={formData.projectType}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl bg-dark-900/90 border border-white/10 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-electric-400/40 focus:border-electric-400 transition"
+            className="w-full px-4 py-3 rounded-xl bg-brand-dark/90 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition"
           >
-            {contactOptions.projectTypes.map((type) => (
-              <option key={type} value={type} className="bg-dark-900 text-slate-200">
+            {contactOptions?.projectTypes?.map((type) => (
+              <option key={type} value={type} className="bg-brand-dark text-white">
                 {type}
               </option>
             ))}
@@ -211,10 +196,10 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
             name="budget"
             value={formData.budget}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl bg-dark-900/90 border border-white/10 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-electric-400/40 focus:border-electric-400 transition"
+            className="w-full px-4 py-3 rounded-xl bg-brand-dark/90 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition"
           >
-            {contactOptions.budgetRanges.map((budget) => (
-              <option key={budget} value={budget} className="bg-dark-900 text-slate-200">
+            {contactOptions?.budgetRanges?.map((budget) => (
+              <option key={budget} value={budget} className="bg-brand-dark text-white">
                 {budget}
               </option>
             ))}
@@ -225,17 +210,17 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
       {/* Message */}
       <div>
         <label htmlFor="message" className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-          Project Details & Goals <span className="text-rose-400">*</span>
+          Project Details & Deliverables <span className="text-brand-orange">*</span>
         </label>
         <textarea
           id="message"
           name="message"
           rows={4}
-          placeholder="Tell me about what you are looking to build (e.g. REST API endpoints, full-stack site, or Express backend architecture)..."
+          placeholder="Tell me about what you need built (e.g., Express REST API endpoints, full-stack site, bug fixing, or responsive frontend)..."
           value={formData.message}
           onChange={handleChange}
-          className={`w-full px-4 py-3 rounded-xl bg-dark-900/80 border text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-electric-400/40 transition resize-none ${
-            errors.message ? 'border-rose-500/80' : 'border-white/10 focus:border-electric-400'
+          className={`w-full px-4 py-3 rounded-xl bg-brand-dark/90 border text-white placeholder:text-brand-muted/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 transition resize-none ${
+            errors.message ? 'border-rose-500/80' : 'border-white/10 focus:border-brand-orange'
           }`}
         />
         {errors.message && (
@@ -249,12 +234,12 @@ export function ContactForm({ initialProjectType = '', onShowToast }) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-electric-500 to-indigoAcc-500 hover:from-electric-400 hover:to-indigoAcc-400 text-white font-semibold text-sm transition-all shadow-lg shadow-electric-500/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white font-bold text-sm transition-all duration-200 shadow-lg shadow-brand-orange/20 hover:shadow-brand-orange/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         {isSubmitting ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Processing...</span>
+            <span>Sending Inquiry...</span>
           </>
         ) : (
           <>

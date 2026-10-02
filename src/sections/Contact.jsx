@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Copy, Check, ArrowUpRight, MessageSquare } from 'lucide-react';
+import { Mail, Copy, Check, ArrowUpRight, MessageSquare, Clock, ShieldCheck, Zap } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { ContactForm } from '../components/ContactForm';
 import { GithubIcon, UpworkIcon, FiverrIcon } from '../components/BrandIcons';
@@ -18,33 +18,36 @@ export function Contact({ selectedService = '', onShowToast }) {
   };
 
   return (
-    <section id="contact" className="py-24 bg-dark-950 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="contact" className="py-24 bg-brand-black relative border-t border-white/5">
+      {/* Background ambient glow */}
+      <div className="absolute top-1/3 left-10 w-96 h-96 bg-brand-orange/[0.04] rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Left Column: Contact Channels & Context (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-electric-500/10 border border-electric-400/30 text-electric-300 text-xs font-mono font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-orange/10 border border-brand-orange/30 text-brand-orange text-xs font-mono font-semibold uppercase tracking-wider">
               Get in Touch
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Let's Work Together
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+              Have a Project in Mind? <span className="text-brand-orange">Let's Build It.</span>
             </h2>
 
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Have an idea, project or API requirement? Send me a message and let's discuss how I can help bring your digital vision to life.
+            <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
+              Have an idea, project, or API requirement? Send me a message and let's discuss how we can engineer a clean, robust solution for your business.
             </p>
 
             {/* Direct Email Card */}
-            <div className="p-5 rounded-2xl glass-card border border-white/10 space-y-3">
+            <div className="p-5 rounded-2xl bg-brand-card/90 border border-white/10 space-y-3 shadow-lg">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-400 font-semibold uppercase">
+                <span className="text-xs font-mono text-brand-muted font-semibold uppercase">
                   Direct Email
                 </span>
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="inline-flex items-center gap-1.5 text-xs text-electric-400 hover:text-electric-300 transition cursor-pointer font-mono"
+                  className="inline-flex items-center gap-1.5 text-xs text-brand-orange hover:text-brand-orange-hover transition cursor-pointer font-mono"
                   title="Copy email address"
                 >
                   {copiedEmail ? (
@@ -55,22 +58,24 @@ export function Contact({ selectedService = '', onShowToast }) {
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span>Copy</span>
+                      <span>Copy Email</span>
                     </>
                   )}
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 text-slate-200 text-sm font-mono truncate">
-                <Mail className="w-4 h-4 text-electric-400 flex-shrink-0" />
+              <div className="flex items-center gap-3 text-white text-sm font-mono truncate">
+                <div className="w-8 h-8 rounded-lg bg-brand-orange/10 border border-brand-orange/20 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-4 h-4 text-brand-orange" />
+                </div>
                 <span className="truncate">{socialLinks.email}</span>
               </div>
             </div>
 
             {/* External Platform Cards */}
             <div className="space-y-3">
-              <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold block">
-                Freelance Channels
+              <span className="text-xs font-mono uppercase tracking-wider text-brand-muted font-semibold block">
+                Freelance & Code Platforms
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -78,36 +83,36 @@ export function Contact({ selectedService = '', onShowToast }) {
                   href={socialLinks.upwork}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-4 rounded-xl bg-dark-900 border border-white/10 hover:border-emerald-500/40 flex items-center justify-between group transition"
+                  className="p-4 rounded-xl bg-brand-card border border-white/10 hover:border-brand-orange/40 flex items-center justify-between group transition-all"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                    <div className="w-8 h-8 rounded-lg bg-[#14a800]/10 flex items-center justify-center text-[#14a800]">
                       <UpworkIcon className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-white">Upwork</div>
-                      <div className="text-[11px] text-slate-400">Hire Profile</div>
+                      <div className="text-xs font-bold text-white group-hover:text-brand-orange transition-colors">Upwork</div>
+                      <div className="text-[11px] text-brand-muted">Direct Contract</div>
                     </div>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                  <ArrowUpRight className="w-4 h-4 text-brand-muted group-hover:text-brand-orange transition-colors" />
                 </a>
 
                 <a
                   href={socialLinks.fiverr}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-4 rounded-xl bg-dark-900 border border-white/10 hover:border-emerald-500/40 flex items-center justify-between group transition"
+                  className="p-4 rounded-xl bg-brand-card border border-white/10 hover:border-brand-orange/40 flex items-center justify-between group transition-all"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                    <div className="w-8 h-8 rounded-lg bg-[#1dbf73]/10 flex items-center justify-center text-[#1dbf73]">
                       <FiverrIcon className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-white">Fiverr</div>
-                      <div className="text-[11px] text-slate-400">Gigs &amp; Orders</div>
+                      <div className="text-xs font-bold text-white group-hover:text-brand-orange transition-colors">Fiverr</div>
+                      <div className="text-[11px] text-brand-muted">Gigs & Milestones</div>
                     </div>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                  <ArrowUpRight className="w-4 h-4 text-brand-muted group-hover:text-brand-orange transition-colors" />
                 </a>
               </div>
 
@@ -115,26 +120,42 @@ export function Contact({ selectedService = '', onShowToast }) {
                 href={socialLinks.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-4 rounded-xl bg-dark-900 border border-white/10 hover:border-electric-400/40 flex items-center justify-between group transition block"
+                className="p-4 rounded-xl bg-brand-card border border-white/10 hover:border-brand-orange/40 flex items-center justify-between group transition-all block"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-dark-800 flex items-center justify-center text-slate-200">
+                  <div className="w-8 h-8 rounded-lg bg-brand-dark flex items-center justify-center text-white border border-white/5">
                     <GithubIcon className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">GitHub</div>
-                    <div className="text-[11px] text-slate-400">Review Code &amp; Repositories</div>
+                    <div className="text-xs font-bold text-white group-hover:text-brand-orange transition-colors">GitHub Repositories</div>
+                    <div className="text-[11px] text-brand-muted">Inspect source code and commits</div>
                   </div>
                 </div>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-electric-300 transition-colors" />
+                <ArrowUpRight className="w-4 h-4 text-brand-muted group-hover:text-brand-orange transition-colors" />
               </a>
+            </div>
+
+            {/* Reassurance Badges */}
+            <div className="pt-2 grid grid-cols-3 gap-2">
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                <Clock className="w-4 h-4 text-brand-orange mx-auto mb-1" />
+                <span className="text-[11px] font-mono text-brand-muted block">24h Response</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                <ShieldCheck className="w-4 h-4 text-brand-orange mx-auto mb-1" />
+                <span className="text-[11px] font-mono text-brand-muted block">Clean Code</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                <Zap className="w-4 h-4 text-brand-orange mx-auto mb-1" />
+                <span className="text-[11px] font-mono text-brand-muted block">Direct 1-on-1</span>
+              </div>
             </div>
           </div>
 
           {/* Right Column: Project Inquiry Form (7 cols) */}
-          <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl glass-card border border-white/10 shadow-xl">
+          <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-brand-card/90 border border-white/10 shadow-2xl">
             <div className="flex items-center gap-2 mb-6 text-sm font-semibold text-white">
-              <MessageSquare className="w-4 h-4 text-electric-400" />
+              <MessageSquare className="w-4 h-4 text-brand-orange" />
               <span>Project Inquiry Form</span>
             </div>
 

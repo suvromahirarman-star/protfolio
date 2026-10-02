@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpRight, Heart, Code2, Lock } from 'lucide-react';
+import { Lock, ArrowUp } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { GithubIcon, UpworkIcon, FiverrIcon } from './BrandIcons';
 
@@ -11,29 +11,33 @@ export function Footer() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <footer className="bg-dark-950 border-t border-white/10 pt-14 pb-10 text-slate-400">
+    <footer className="bg-brand-black border-t border-white/10 pt-16 pb-12 text-brand-muted">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-white/5">
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-electric-500/20 to-indigoAcc-500/20 border border-electric-400/40 flex items-center justify-center font-bold text-sm tracking-wider text-gradient">
-                {developerInfo.initials}
+              <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/30 flex items-center justify-center font-bold text-sm tracking-wider text-brand-orange">
+                {developerInfo.initials || 'MAS'}
               </div>
-              <span className="text-lg font-bold text-white tracking-tight">
+              <span className="text-xl font-extrabold text-white tracking-tight">
                 {developerInfo.name}
               </span>
             </div>
-            <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-              {developerInfo.title} focused on reliable backend systems, REST APIs, and responsive modern interfaces. Ready to build for your business.
+            <p className="text-sm text-brand-muted max-w-sm leading-relaxed">
+              Full-Stack Web Developer specialized in building scalable Node.js & Express REST APIs, modern responsive frontend interfaces, and production-ready applications.
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
                 href={socialLinks.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl bg-dark-900 border border-white/10 hover:border-electric-400/40 hover:text-white flex items-center justify-center transition"
+                className="w-10 h-10 rounded-xl bg-brand-card border border-white/10 hover:border-brand-orange/40 hover:text-white flex items-center justify-center transition-all duration-200"
                 aria-label="GitHub Profile"
                 title="GitHub"
               >
@@ -43,7 +47,7 @@ export function Footer() {
                 href={socialLinks.upwork}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl bg-dark-900 border border-white/10 hover:border-emerald-400/40 hover:text-emerald-400 flex items-center justify-center transition"
+                className="w-10 h-10 rounded-xl bg-brand-card border border-white/10 hover:border-[#14a800]/50 hover:text-[#14a800] flex items-center justify-center transition-all duration-200"
                 aria-label="Upwork Profile"
                 title="Hire on Upwork"
               >
@@ -53,7 +57,7 @@ export function Footer() {
                 href={socialLinks.fiverr}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl bg-dark-900 border border-white/10 hover:border-emerald-400/40 hover:text-emerald-400 flex items-center justify-center transition"
+                className="w-10 h-10 rounded-xl bg-brand-card border border-white/10 hover:border-[#1dbf73]/50 hover:text-[#1dbf73] flex items-center justify-center transition-all duration-200"
                 aria-label="Fiverr Profile"
                 title="Hire on Fiverr"
               >
@@ -64,56 +68,72 @@ export function Footer() {
 
           {/* Quick Navigation */}
           <div>
-            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 mb-4">
-              Navigation
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white mb-4">
+              Quick Navigation
             </h4>
             <ul className="space-y-2.5 text-sm">
-              {['Home', 'About', 'Skills', 'Services', 'Projects', 'Contact'].map((item) => (
-                <li key={item}>
+              {[
+                { name: 'Home', id: '#home' },
+                { name: 'About', id: '#about' },
+                { name: 'Skills', id: '#skills' },
+                { name: 'Services', id: '#services' },
+                { name: 'Projects', id: '#projects' },
+                { name: 'Contact', id: '#contact' },
+              ].map((item) => (
+                <li key={item.name}>
                   <button
                     type="button"
-                    onClick={() => scrollTo(`#${item.toLowerCase()}`)}
-                    className="hover:text-electric-300 transition-colors cursor-pointer"
+                    onClick={() => scrollTo(item.id)}
+                    className="hover:text-brand-orange transition-colors cursor-pointer text-left"
                   >
-                    {item}
+                    {item.name}
                   </button>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Services Quicklist */}
+          {/* Core Services */}
           <div>
-            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 mb-4">
-              Core Expertise
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white mb-4">
+              Core Capabilities
             </h4>
             <ul className="space-y-2.5 text-sm">
-              <li className="text-slate-400 hover:text-slate-200 transition">Backend Architecture</li>
-              <li className="text-slate-400 hover:text-slate-200 transition">REST & CRUD APIs</li>
-              <li className="text-slate-400 hover:text-slate-200 transition">Responsive Frontend</li>
-              <li className="text-slate-400 hover:text-slate-200 transition">Tailwind CSS Design</li>
-              <li className="text-slate-400 hover:text-slate-200 transition">API Integration</li>
+              <li className="hover:text-white transition-colors">REST & CRUD API Design</li>
+              <li className="hover:text-white transition-colors">Express Backend Architecture</li>
+              <li className="hover:text-white transition-colors">Modern Responsive Frontend</li>
+              <li className="hover:text-white transition-colors">Database Integration</li>
+              <li className="hover:text-white transition-colors">Website Bug Fixing & Tuning</li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Row */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-mono">
-          <p>© 2026 {developerInfo.name}. All rights reserved.</p>
-          <div className="flex items-center gap-4 text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <span>Built with</span>
-              <span className="text-electric-400 font-semibold">React & Tailwind CSS</span>
-            </div>
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+          <p>© {new Date().getFullYear()} {developerInfo.name}. All rights reserved.</p>
+
+          <div className="flex items-center gap-4">
+            <span className="text-brand-muted">
+              Designed with <span className="text-brand-orange font-semibold">White + Black + Orange</span>
+            </span>
             <span>•</span>
             <button
               type="button"
               onClick={() => setIsAdminOpen(true)}
-              className="hover:text-electric-400 transition-colors inline-flex items-center gap-1 text-slate-500 hover:text-slate-300 cursor-pointer"
-              title="Admin Customization (Passcode Protected)"
+              className="hover:text-brand-orange transition-colors inline-flex items-center gap-1.5 text-brand-muted hover:text-white cursor-pointer"
+              title="Admin Customization Studio"
             >
-              <Lock className="w-3 h-3 text-electric-400" />
-              <span>Admin Mode</span>
+              <Lock className="w-3 h-3 text-brand-orange" />
+              <span>Studio</span>
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="hover:text-brand-orange transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>Back to Top</span>
+              <ArrowUp className="w-3 h-3" />
             </button>
           </div>
         </div>

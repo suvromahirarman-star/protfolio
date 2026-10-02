@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { X, ExternalLink, ChevronLeft, ChevronRight, CheckCircle2, Server, Layers, Code2 } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight, CheckCircle2, Code2, ArrowUpRight } from 'lucide-react';
 import { GithubIcon } from './BrandIcons';
 
 export function ProjectModal({ project, onClose }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
 
-  // Close modal on Escape key
+  // Close modal on Escape key & lock scroll
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -14,7 +14,6 @@ export function ProjectModal({ project, onClose }) {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    // Lock body scroll
     document.body.style.overflow = 'hidden';
 
     return () => {
@@ -29,7 +28,6 @@ export function ProjectModal({ project, onClose }) {
     ? project.screenshots
     : [project.image];
 
-  // Resolve initial path without /src/assets if it starts with it
   const resolvePath = (p) => (typeof p === 'string' && p.startsWith('/src/assets') ? p.replace('/src/assets', '') : p);
 
   const rawCurrent = rawScreenshots[activeImageIndex] || project.image;
@@ -56,23 +54,23 @@ export function ProjectModal({ project, onClose }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 md:p-6 bg-dark-950/80 backdrop-blur-md overflow-y-auto animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md overflow-y-auto"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
       <div 
-        className="relative w-full max-w-4xl min-h-screen sm:min-h-0 bg-dark-900 border-0 sm:border border-white/10 sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto"
+        className="relative w-full max-w-4xl min-h-screen sm:min-h-0 bg-[#121212] border-0 sm:border border-[#262626] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Bar */}
-        <div className="sticky top-0 z-20 flex items-center justify-between px-5 sm:px-6 py-4 bg-dark-900/95 backdrop-blur-md border-b border-white/10">
+        <div className="sticky top-0 z-20 flex items-center justify-between px-5 sm:px-6 py-4 bg-[#171717] border-b border-[#262626]">
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 rounded-md bg-electric-500/10 border border-electric-400/30 text-electric-400 text-xs font-mono font-medium">
+            <span className="px-2.5 py-1 rounded-md bg-[#1A1A1A] border border-[#FF6B00]/30 text-[#FF8533] text-xs font-mono font-medium">
               {project.category}
             </span>
-            <h2 id="modal-title" className="text-lg sm:text-xl font-bold text-white line-clamp-1">
+            <h2 id="modal-title" className="text-base sm:text-lg font-bold text-white line-clamp-1">
               {project.title}
             </h2>
           </div>
@@ -80,7 +78,7 @@ export function ProjectModal({ project, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -88,9 +86,9 @@ export function ProjectModal({ project, onClose }) {
         </div>
 
         {/* Modal Content */}
-        <div className="p-5 sm:p-6 md:p-8 space-y-6 overflow-y-auto max-h-[calc(100vh-80px)] sm:max-h-[80vh]">
+        <div className="p-5 sm:p-6 md:p-8 space-y-6 overflow-y-auto max-h-[calc(100vh-80px)] sm:max-h-[82vh]">
           {/* Main Screenshot / Preview Carousel */}
-          <div className="relative rounded-2xl overflow-hidden bg-dark-950 border border-white/10 shadow-inner group">
+          <div className="relative rounded-2xl overflow-hidden bg-[#0A0A0A] border border-[#262626] shadow-inner group">
             <div className="relative w-full h-64 sm:h-80 md:h-96 flex items-center justify-center">
               {!imageError ? (
                 <img
@@ -100,18 +98,15 @@ export function ProjectModal({ project, onClose }) {
                   className="w-full h-full object-cover object-top transition-all duration-300"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-dark-850 to-dark-950 relative">
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#121212] to-[#0A0A0A] relative">
                   <div className="absolute inset-0 bg-grid-pattern opacity-20" />
-                  <div className="relative z-10 w-16 h-16 rounded-2xl bg-electric-500/10 border border-electric-400/30 flex items-center justify-center mb-3 text-electric-400">
+                  <div className="relative z-10 w-16 h-16 rounded-2xl bg-[#1A1A1A] border border-[#262626] flex items-center justify-center mb-3 text-[#FF6B00]">
                     <Code2 className="w-8 h-8" />
                   </div>
-                  <h4 className="text-base font-bold text-slate-200">{project.title}</h4>
-                  <p className="text-xs text-electric-400 font-mono mt-1">
+                  <h4 className="text-base font-bold text-neutral-200">{project.title}</h4>
+                  <p className="text-xs text-[#FF8533] font-mono mt-1">
                     Slide {activeImageIndex + 1} of {rawScreenshots.length}
                   </p>
-                  <span className="text-[11px] text-slate-500 font-mono mt-2">
-                    Place project screenshot at {currentSrc}
-                  </span>
                 </div>
               )}
 
@@ -121,7 +116,7 @@ export function ProjectModal({ project, onClose }) {
                   <button
                     type="button"
                     onClick={handlePrevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-dark-950/70 text-white hover:bg-dark-900 border border-white/10 transition-colors backdrop-blur-sm"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-black/75 text-white hover:bg-[#121212] border border-[#262626] transition-colors backdrop-blur-sm cursor-pointer"
                     aria-label="Previous screenshot"
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -129,7 +124,7 @@ export function ProjectModal({ project, onClose }) {
                   <button
                     type="button"
                     onClick={handleNextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-dark-950/70 text-white hover:bg-dark-900 border border-white/10 transition-colors backdrop-blur-sm"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-black/75 text-white hover:bg-[#121212] border border-[#262626] transition-colors backdrop-blur-sm cursor-pointer"
                     aria-label="Next screenshot"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -140,7 +135,7 @@ export function ProjectModal({ project, onClose }) {
 
             {/* Thumbnail Navigator */}
             {rawScreenshots.length > 1 && (
-              <div className="flex items-center justify-center gap-2 p-3 bg-dark-900/90 border-t border-white/5">
+              <div className="flex items-center justify-center gap-2 p-3 bg-[#171717] border-t border-[#262626]">
                 {rawScreenshots.map((shot, idx) => (
                   <button
                     key={shot + idx}
@@ -149,13 +144,13 @@ export function ProjectModal({ project, onClose }) {
                       setImageError(false);
                       setActiveImageIndex(idx);
                     }}
-                    className={`w-12 h-8 rounded-lg overflow-hidden border transition-all ${
+                    className={`w-12 h-8 rounded-lg overflow-hidden border transition-all cursor-pointer ${
                       activeImageIndex === idx
-                        ? 'border-electric-400 scale-105 shadow-md shadow-electric-500/20'
-                        : 'border-white/10 opacity-60 hover:opacity-100'
+                        ? 'border-[#FF6B00] scale-105 shadow-md shadow-[#FF6B00]/25'
+                        : 'border-[#262626] opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <div className="w-full h-full bg-dark-800 flex items-center justify-center text-[10px] text-slate-400 font-mono">
+                    <div className="w-full h-full bg-[#0A0A0A] flex items-center justify-center text-[10px] text-neutral-400 font-mono">
                       #{idx + 1}
                     </div>
                   </button>
@@ -165,12 +160,12 @@ export function ProjectModal({ project, onClose }) {
           </div>
 
           {/* Links & Quick Actions */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-dark-850 border border-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-[#171717] border border-[#262626]">
             <div className="flex flex-wrap gap-2">
               {project.technologies.map((tech) => (
                 <span
                   key={tech}
-                  className="px-3 py-1 rounded-md bg-dark-800 border border-white/10 text-xs font-mono font-medium text-slate-300"
+                  className="px-3 py-1 rounded-md bg-[#121212] border border-[#262626] text-xs font-mono font-medium text-neutral-300"
                 >
                   {tech}
                 </span>
@@ -183,7 +178,7 @@ export function ProjectModal({ project, onClose }) {
                   href={project.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-white text-sm font-medium border border-white/10 transition shadow-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1A1A1A] hover:bg-[#262626] text-white text-xs font-medium border border-[#262626] transition-colors"
                 >
                   <GithubIcon className="w-4 h-4" />
                   <span>View Repository</span>
@@ -194,42 +189,42 @@ export function ProjectModal({ project, onClose }) {
                   href={project.liveDemo}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-electric-500 to-indigoAcc-500 hover:from-electric-400 hover:to-indigoAcc-400 text-white text-sm font-semibold transition shadow-md shadow-electric-500/20"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#FF8533] text-white text-xs font-bold transition-all shadow-md shadow-[#FF6B00]/25"
                 >
-                  <ExternalLink className="w-4 h-4" />
                   <span>Live Demo</span>
+                  <ArrowUpRight className="w-4 h-4" />
                 </a>
               )}
             </div>
           </div>
 
-          {/* Overview, Problem & Solution */}
+          {/* Overview, Challenge & Solution */}
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 font-mono">
                 Project Overview
               </h3>
-              <p className="mt-2 text-slate-200 text-sm sm:text-base leading-relaxed">
+              <p className="mt-2 text-neutral-200 text-sm sm:text-base leading-relaxed">
                 {project.overview || project.description}
               </p>
             </div>
 
             {project.problem && project.solution && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div className="p-4 rounded-xl bg-dark-850/50 border border-white/5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono">
+                <div className="p-4 rounded-xl bg-[#171717] border border-[#262626]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#FF8533] font-mono">
                     The Challenge / Problem
                   </span>
-                  <p className="mt-1.5 text-slate-300 text-xs sm:text-sm leading-relaxed">
+                  <p className="mt-1.5 text-neutral-300 text-xs sm:text-sm leading-relaxed">
                     {project.problem}
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-dark-850/50 border border-white/5">
+                <div className="p-4 rounded-xl bg-[#171717] border border-[#262626]">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">
                     The Architectural Solution
                   </span>
-                  <p className="mt-1.5 text-slate-300 text-xs sm:text-sm leading-relaxed">
+                  <p className="mt-1.5 text-neutral-300 text-xs sm:text-sm leading-relaxed">
                     {project.solution}
                   </p>
                 </div>
@@ -240,16 +235,16 @@ export function ProjectModal({ project, onClose }) {
           {/* Key Features */}
           {project.features && project.features.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono mb-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 font-mono mb-3">
                 Key Technical Features
               </h3>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {project.features.map((feat, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2.5 p-3 rounded-xl bg-dark-850/60 border border-white/5 text-slate-300 text-xs sm:text-sm"
+                    className="flex items-start gap-2.5 p-3 rounded-xl bg-[#171717] border border-[#262626] text-neutral-300 text-xs sm:text-sm"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-electric-400 flex-shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-[#FF6B00] flex-shrink-0 mt-0.5" />
                     <span>{feat}</span>
                   </li>
                 ))}

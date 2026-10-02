@@ -1,44 +1,60 @@
 import React from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Sparkles, MessageSquare } from 'lucide-react';
 import { GithubIcon, UpworkIcon, FiverrIcon } from '../components/BrandIcons';
 
 export function FreelancingCTA() {
   const { socialLinks } = usePortfolio();
+
+  const scrollToContact = () => {
+    const el = document.querySelector('#contact');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <section className="py-20 bg-dark-900/40 relative">
+    <section className="py-20 bg-brand-black relative border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl p-8 sm:p-14 bg-gradient-to-br from-dark-850 via-dark-900 to-dark-950 border border-electric-400/20 shadow-2xl overflow-hidden text-center">
+        <div className="relative rounded-3xl p-8 sm:p-14 bg-brand-card/90 border border-brand-orange/30 shadow-2xl overflow-hidden text-center">
           {/* Ambient Glows */}
-          <div className="absolute -top-24 -left-24 w-72 h-72 bg-electric-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-indigoAcc-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -left-24 w-72 h-72 bg-brand-orange/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-brand-orange/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-electric-500/10 border border-electric-400/30 text-electric-300 text-xs font-mono font-medium">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-orange/10 border border-brand-orange/30 text-brand-orange text-xs font-mono font-medium">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Available for Hire</span>
+              <span>Available for New Projects</span>
             </div>
 
             <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-              Have a Project in Mind?
+              Have a Project <span className="text-brand-orange">in Mind?</span>
             </h2>
 
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-              Whether you need a REST API, backend system, responsive website or a complete web application, let's discuss your project.
+            <p className="text-brand-muted text-base sm:text-lg leading-relaxed">
+              Whether you need a reliable REST API, scalable backend architecture, responsive frontend, or bug fixes, let's turn your requirements into production software.
             </p>
 
             {/* Prominent Action Buttons */}
             <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+              {/* Direct Project Inquiry (Primary Orange CTA) */}
+              <button
+                type="button"
+                onClick={scrollToContact}
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white font-bold text-sm transition-all duration-200 shadow-lg shadow-brand-orange/25 hover:shadow-brand-orange/35 hover:-translate-y-0.5 cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Start Direct Discussion</span>
+              </button>
+
               {/* Upwork */}
               <a
                 href={socialLinks.upwork}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#14a800] hover:bg-[#118f00] text-white font-bold text-sm transition-all duration-300 shadow-lg shadow-[#14a800]/25 hover:shadow-[#14a800]/35 hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-brand-dark hover:bg-brand-dark/80 text-white font-semibold text-sm border border-white/10 hover:border-brand-orange/40 transition-all duration-200 hover:-translate-y-0.5"
               >
-                <UpworkIcon className="w-5 h-5" />
-                <span>Hire Me on Upwork</span>
-                <ArrowUpRight className="w-4 h-4" />
+                <UpworkIcon className="w-4 h-4 text-[#14a800]" />
+                <span>Hire on Upwork</span>
+                <ArrowUpRight className="w-4 h-4 text-brand-muted" />
               </a>
 
               {/* Fiverr */}
@@ -46,11 +62,11 @@ export function FreelancingCTA() {
                 href={socialLinks.fiverr}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#1dbf73] hover:bg-[#19a463] text-white font-bold text-sm transition-all duration-300 shadow-lg shadow-[#1dbf73]/25 hover:shadow-[#1dbf73]/35 hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-brand-dark hover:bg-brand-dark/80 text-white font-semibold text-sm border border-white/10 hover:border-brand-orange/40 transition-all duration-200 hover:-translate-y-0.5"
               >
-                <FiverrIcon className="w-5 h-5" />
-                <span>Find Me on Fiverr</span>
-                <ArrowUpRight className="w-4 h-4" />
+                <FiverrIcon className="w-4 h-4 text-[#1dbf73]" />
+                <span>Hire on Fiverr</span>
+                <ArrowUpRight className="w-4 h-4 text-brand-muted" />
               </a>
 
               {/* GitHub */}
@@ -58,15 +74,15 @@ export function FreelancingCTA() {
                 href={socialLinks.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-dark-800 hover:bg-dark-700 text-slate-200 hover:text-white font-semibold text-sm border border-white/10 transition-all hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-brand-dark/60 hover:bg-brand-dark text-slate-300 hover:text-white font-medium text-sm border border-white/5 hover:border-white/20 transition-all hover:-translate-y-0.5"
               >
                 <GithubIcon className="w-4 h-4" />
-                <span>View GitHub</span>
+                <span>GitHub Repos</span>
               </a>
             </div>
 
-            <p className="text-xs text-slate-500 font-mono pt-2">
-              Fast communication • Flexible hourly or fixed-price arrangements
+            <p className="text-xs text-brand-muted font-mono pt-3">
+              Fast response • Clear milestones • Flexible fixed-price or milestone terms
             </p>
           </div>
         </div>

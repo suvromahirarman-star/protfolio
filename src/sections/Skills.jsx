@@ -19,7 +19,6 @@ import { GithubIcon } from '../components/BrandIcons';
 export function Skills() {
   const [activeCategory, setActiveCategory] = useState('all');
 
-  // Map skill name to Lucide icon
   const getSkillIcon = (name) => {
     switch (name) {
       case 'HTML5':
@@ -35,35 +34,35 @@ export function Skills() {
       case 'Node.js':
         return <Cpu className="w-5 h-5 text-emerald-400" />;
       case 'Express.js':
-        return <Server className="w-5 h-5 text-electric-400" />;
+        return <Server className="w-5 h-5 text-[#FF6B00]" />;
       case 'REST APIs':
-        return <Network className="w-5 h-5 text-indigoAcc-400" />;
+        return <Network className="w-5 h-5 text-[#FF8533]" />;
       case 'CRUD APIs':
-        return <Database className="w-5 h-5 text-rose-400" />;
+        return <Database className="w-5 h-5 text-emerald-400" />;
       case 'Server-Side Logic':
-        return <Server className="w-5 h-5 text-cyan-400" />;
+        return <Server className="w-5 h-5 text-[#FF6B00]" />;
       case 'Git':
         return <GitBranch className="w-5 h-5 text-orange-400" />;
       case 'GitHub':
-        return <GithubIcon className="w-5 h-5 text-slate-200" />;
+        return <GithubIcon className="w-5 h-5 text-white" />;
       case 'VS Code':
         return <Laptop className="w-5 h-5 text-blue-400" />;
       default:
-        return <Code className="w-5 h-5 text-electric-400" />;
+        return <Code className="w-5 h-5 text-[#FF6B00]" />;
     }
   };
 
   const categories = [
-    { key: 'all', label: 'All Technologies', count: 13 },
-    { key: 'backend', label: 'Backend Development', count: skillsData.backend.length, icon: Server },
-    { key: 'frontend', label: 'Frontend Development', count: skillsData.frontend.length, icon: Layout },
-    { key: 'tools', label: 'Tools & Workflow', count: skillsData.tools.length, icon: Wrench },
+    { key: 'all', label: 'All Technologies' },
+    { key: 'backend', label: 'Backend Architecture', count: skillsData.backend.length },
+    { key: 'frontend', label: 'Frontend Interface', count: skillsData.frontend.length },
+    { key: 'tools', label: 'Tools & Workflow', count: skillsData.tools.length },
   ];
 
   const getFilteredGroups = () => {
-    if (activeCategory === 'backend') return [{ title: 'Backend Specialization', items: skillsData.backend }];
-    if (activeCategory === 'frontend') return [{ title: 'Frontend Stack', items: skillsData.frontend }];
-    if (activeCategory === 'tools') return [{ title: 'Development Tools', items: skillsData.tools }];
+    if (activeCategory === 'backend') return [{ title: 'Backend Specialization (Primary Focus)', items: skillsData.backend }];
+    if (activeCategory === 'frontend') return [{ title: 'Frontend Capabilities', items: skillsData.frontend }];
+    if (activeCategory === 'tools') return [{ title: 'Development Tools & Environment', items: skillsData.tools }];
 
     return [
       { title: 'Backend Specialization (Primary Focus)', items: skillsData.backend },
@@ -73,18 +72,19 @@ export function Skills() {
   };
 
   return (
-    <section id="skills" className="py-24 bg-dark-900/50 relative">
+    <section id="skills" className="py-24 bg-[#0A0A0A] relative border-b border-[#262626]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-electric-500/10 border border-electric-400/30 text-electric-300 text-xs font-mono font-semibold uppercase tracking-wider">
-            Technical Stack
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#121212] border border-[#262626] text-neutral-300 text-xs font-mono font-semibold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
+            <span>Technical Stack</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Specialized Skills &amp; Technologies
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+            Specialized Skills &amp; <span className="text-[#FF6B00]">Technologies.</span>
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-            The specific, production-ready technologies I use to build reliable backend services, RESTful APIs, and modern responsive interfaces.
+          <p className="text-neutral-400 text-sm sm:text-base leading-relaxed">
+            The verified, production-ready technologies I use daily to build reliable backend services, RESTful APIs, and modern responsive interfaces.
           </p>
 
           {/* Filter tabs */}
@@ -94,10 +94,10 @@ export function Skills() {
                 key={cat.key}
                 type="button"
                 onClick={() => setActiveCategory(cat.key)}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
                   activeCategory === cat.key
-                    ? 'bg-electric-500 text-white shadow-lg shadow-electric-500/25 font-semibold'
-                    : 'bg-dark-850 text-slate-300 hover:text-white hover:bg-dark-800 border border-white/5'
+                    ? 'bg-[#FF6B00] text-white shadow-md shadow-[#FF6B00]/25 font-bold'
+                    : 'bg-[#121212] text-neutral-300 hover:text-white hover:bg-[#1A1A1A] border border-[#262626]'
                 }`}
               >
                 {cat.label}
@@ -110,29 +110,30 @@ export function Skills() {
         <div className="mt-14 space-y-12">
           {getFilteredGroups().map((group) => (
             <div key={group.title} className="space-y-4">
-              <h3 className="text-sm font-mono uppercase tracking-wider text-slate-400 font-semibold border-b border-white/5 pb-2">
-                {group.title}
+              <h3 className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold border-b border-[#262626] pb-2 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
+                <span>{group.title}</span>
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {group.items.map((skill) => (
                   <div
                     key={skill.name}
-                    className="p-5 rounded-2xl glass-card glass-card-hover flex items-start gap-4"
+                    className="p-5 rounded-xl bg-[#121212] border border-[#262626] hover:border-[#FF6B00]/40 transition-all duration-200 group flex items-start gap-4 shadow-sm hover:-translate-y-1 hover:shadow-lg hover:shadow-black/40"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-dark-800 border border-white/10 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <div className="w-11 h-11 rounded-lg bg-[#0A0A0A] border border-[#262626] group-hover:border-[#FF6B00]/30 flex items-center justify-center flex-shrink-0 transition-colors">
                       {getSkillIcon(skill.name)}
                     </div>
                     <div className="flex-grow min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-base font-bold text-white tracking-tight">
+                        <h4 className="text-sm sm:text-base font-bold text-white tracking-tight group-hover:text-[#FF8533] transition-colors">
                           {skill.name}
                         </h4>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-dark-800 text-electric-300 border border-white/5">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1A1A1A] text-[#FF8533] border border-[#262626]">
                           {skill.level}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                      <p className="text-xs text-neutral-400 mt-1.5 leading-relaxed">
                         {skill.description}
                       </p>
                     </div>
