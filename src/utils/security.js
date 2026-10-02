@@ -6,7 +6,7 @@
  * - Cross-device global PIN synchronization support
  */
 
-import { authConfig } from '../data/portfolioData';
+import { authConfig } from '../data/portfolioData.js';
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 60 * 1000; // 60 seconds
@@ -79,16 +79,13 @@ export async function verifySecurePin(enteredPin, dynamicPinHash) {
     defaultHash;
 
   const inputHash = await hashPin(enteredPin);
-  const isDefaultPin = defaultHash && inputHash === defaultHash;
 
-  if (inputHash === storedHash || isDefaultPin) {
+  // Strictly verify against the active PIN.
+  // Once a new PIN is set, the old PIN is completely revoked and rejected.
+  if (inputHash === storedHash) {
     // Reset attempt counters on successful login
     localStorage.removeItem(STORAGE_KEYS.ATTEMPTS);
     localStorage.removeItem(STORAGE_KEYS.LOCKOUT_UNTIL);
-    // If logged in via default PIN and stored hash was corrupted/stale, heal it
-    if (isDefaultPin && storedHash !== defaultHash) {
-      localStorage.setItem(STORAGE_KEYS.PIN_HASH, defaultHash);
-    }
     // Set session expiry
     localStorage.setItem(STORAGE_KEYS.SESSION_EXPIRY, String(Date.now() + SESSION_DURATION_MS));
     return { success: true };
