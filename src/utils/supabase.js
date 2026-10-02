@@ -60,10 +60,10 @@ create policy "Anon Delete on portfolio_images" on storage.objects
 `;
 
 export function getSupabaseCredentials() {
-  const envUrl = import.meta.env.VITE_SUPABASE_URL;
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const localUrl = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL);
-  const localKey = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY);
+  const envUrl = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : undefined;
+  const envKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_ANON_KEY : undefined;
+  const localUrl = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) : null;
+  const localKey = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) : null;
 
   const url = localUrl || envUrl || DEFAULT_SUPABASE_URL || '';
   const key = localKey || envKey || DEFAULT_SUPABASE_ANON_KEY || '';
@@ -171,7 +171,32 @@ export async function fetchCloudPortfolio() {
 }
 
 /**
- * Saves entire portfolio data state to Supabase cloud
+ * Converts a Data URL (Base64) to a Blob object for Supabase Storage upload
+ */
+export function base64ToBlob(base64Str) {
+  if (typeof base64Str !== 'string' || !base64Str.startsWith('data:image/')) {
+    return null;
+  }
+  try {
+    const parts = base64Str.split(';base64,');
+    const contentType = parts[0].split(':')[1] || 'image/png';
+    const raw = typeof window !== 'undefined' ? window.atob(parts[1]) : Buffer.from(parts[1], 'base64').toString('binary');
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+    for (let i = 0; i < rawLength; ++i) {
+      uInt8Array[i] = raw.charCodeAt(i);
+    }
+    return new Blob([uInt8Array], { type: contentType });
+  } catch (e) {
+    console.warn('Failed to convert base64 to blob:', e);
+    return null;
+  }
+}
+
+/**
+ * Saves entire portfolio data state to Supabase cloud.
+ * Automatically offloads any heavy Base64 images to Supabase Storage first,
+ * preventing PostgreSQL 'statement timeout' errors from giant JSONB payloads.
  */
 export async function saveCloudPortfolio({ developerInfo, socialLinks, projects, pinHash }) {
   const client = getSupabaseClient();
@@ -179,25 +204,106 @@ export async function saveCloudPortfolio({ developerInfo, socialLinks, projects,
     throw new Error('Supabase is not configured.');
   }
 
+  let sanitizedDeveloperInfo = developerInfo ? { ...developerInfo } : undefined;
+  let sanitizedProjects = projects ? [...projects] : undefined;
+
+  // 1. Offload profile image if it is Base64
+  if (
+    sanitizedDeveloperInfo &&
+    typeof sanitizedDeveloperInfo.profileImage === 'string' &&
+    sanitizedDeveloperInfo.profileImage.startsWith('data:image/')
+  ) {
+    try {
+      const blob = base64ToBlob(sanitizedDeveloperInfo.profileImage);
+      if (blob) {
+        const publicUrl = await uploadCloudImage(blob, 'profile');
+        sanitizedDeveloperInfo.profileImage = publicUrl;
+      }
+    } catch (e) {
+      console.warn('Could not offload base64 profile image to storage, reverting to default:', e);
+      sanitizedDeveloperInfo.profileImage = '/profile.jpg';
+    }
+  }
+
+  // 2. Offload project screenshots if they are Base64
+  if (sanitizedProjects && Array.isArray(sanitizedProjects)) {
+    sanitizedProjects = await Promise.all(
+      sanitizedProjects.map(async (proj) => {
+        const updatedProj = { ...proj };
+        // Check primary image
+        if (typeof updatedProj.image === 'string' && updatedProj.image.startsWith('data:image/')) {
+          try {
+            const blob = base64ToBlob(updatedProj.image);
+            if (blob) {
+              updatedProj.image = await uploadCloudImage(blob, 'projects');
+            }
+          } catch (e) {
+            console.warn('Could not offload base64 project image, reverting to default:', e);
+            updatedProj.image = '/projects/cineverse.png';
+          }
+        }
+        // Check screenshots array
+        if (Array.isArray(updatedProj.screenshots)) {
+          updatedProj.screenshots = await Promise.all(
+            updatedProj.screenshots.map(async (shot) => {
+              if (typeof shot === 'string' && shot.startsWith('data:image/')) {
+                try {
+                  const blob = base64ToBlob(shot);
+                  if (blob) {
+                    return await uploadCloudImage(blob, 'projects');
+                  }
+                } catch (e) {
+                  return updatedProj.image || '/projects/cineverse.png';
+                }
+              }
+              return shot;
+            })
+          );
+        }
+        return updatedProj;
+      })
+    );
+  }
+
   const payload = {
     id: 'main',
     updated_at: new Date().toISOString(),
   };
 
-  if (developerInfo !== undefined) payload.developer_info = developerInfo;
+  if (sanitizedDeveloperInfo !== undefined) payload.developer_info = sanitizedDeveloperInfo;
   if (socialLinks !== undefined) payload.social_links = socialLinks;
-  if (projects !== undefined) payload.projects = projects;
+  if (sanitizedProjects !== undefined) payload.projects = sanitizedProjects;
   if (pinHash !== undefined) payload.pin_hash = pinHash;
 
-  const { error } = await client
-    .from(TABLE_NAME)
-    .upsert(payload, { onConflict: 'id' });
+  // Execute upsert with retry on transient timeout
+  let attempts = 0;
+  while (attempts < 2) {
+    attempts++;
+    const { error } = await client
+      .from(TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' });
 
-  if (error) {
+    if (!error) {
+      return {
+        ok: true,
+        sanitizedDeveloperInfo,
+        sanitizedProjects,
+      };
+    }
+
+    if (
+      error.message &&
+      (error.message.includes('statement timeout') || error.message.includes('canceling statement')) &&
+      attempts < 2
+    ) {
+      await new Promise((res) => setTimeout(res, 1200));
+      continue;
+    }
+
     throw new Error(error.message || 'Failed to save to Supabase cloud.');
   }
 
-  return true;
+  return { ok: true, sanitizedDeveloperInfo, sanitizedProjects };
 }
 
 /**

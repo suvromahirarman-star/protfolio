@@ -320,12 +320,20 @@ export function PortfolioProvider({ children }) {
     if (!isSupabaseConfigured()) {
       throw new Error('Supabase is not configured.');
     }
-    await saveCloudPortfolio({
+    const res = await saveCloudPortfolio({
       developerInfo,
       socialLinks,
       projects,
       pinHash: currentPinHash,
     });
+    if (res?.sanitizedDeveloperInfo) {
+      setDeveloperInfo(res.sanitizedDeveloperInfo);
+      localStorage.setItem(STORAGE_KEYS.DEV_INFO, JSON.stringify(res.sanitizedDeveloperInfo));
+    }
+    if (res?.sanitizedProjects) {
+      setProjects(res.sanitizedProjects);
+      await setAsset(STORAGE_KEYS.PROJECTS, res.sanitizedProjects);
+    }
     setIsCloudConnected(true);
     return true;
   };
